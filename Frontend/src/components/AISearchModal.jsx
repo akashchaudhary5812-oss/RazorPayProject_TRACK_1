@@ -35,8 +35,23 @@ export default function AISearchModal({
   const [activeBundleIndex, setActiveBundleIndex] = useState(0);
   const [lastRequirementId, setLastRequirementId] = useState(null);
 
-  const availableCategories = ["Mobile Phones", "Laptops", "Gaming", "Sports", "Jewellery", "Kids Toys", "Food"];
-  const availableBrands = ["Apple", "Samsung", "Google", "OnePlus", "Xiaomi", "Motorola", "Nothing", "Realme", "Sony", "Nike", "Adidas", "Dell", "HP", "Lenovo"];
+  const availableCategories = [
+    "Electronics",
+    "Grocery & Food",
+    "Women's Fashion",
+    "Jewellery",
+    "Beauty & Care",
+    "Men's Fashion",
+    "Footwear",
+    "Home & Kitchen",
+    "Sports & Fitness",
+    "Books & Stationery",
+    "Toys & Games",
+    "Travel & Luggage"
+  ];
+  const availableBrands = [
+    "Apple", "Samsung", "Sony", "OnePlus", "Tata", "Fortune", "Biba", "GIVA", "Maybelline", "Nike", "Adidas", "Levi's", "Prestige", "Puma", "Lego", "American Tourister"
+  ];
 
   // Initialize Speech Recognition
   useEffect(() => {

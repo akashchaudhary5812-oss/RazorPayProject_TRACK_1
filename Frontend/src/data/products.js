@@ -1,191 +1,44 @@
+import { ELECTRONICS_PRODUCTS } from './electronics.js';
+import { GROCERY_PRODUCTS } from './grocery.js';
+import { WOMENS_FASHION_PRODUCTS } from './womensFashion.js';
+import { FASHION_ACCESSORIES_PRODUCTS } from './fashionAccessories.js';
+import { JEWELLERY_PRODUCTS } from './jewellery.js';
+import { BEAUTY_PRODUCTS } from './beauty.js';
+import { MENS_FASHION_PRODUCTS } from './mensFashion.js';
+import { FOOTWEAR_PRODUCTS } from './footwear.js';
+import { HOME_KITCHEN_PRODUCTS } from './homeKitchen.js';
+import { SPORTS_PRODUCTS } from './sports.js';
+import { BOOKS_STATIONERY_PRODUCTS } from './booksStationery.js';
+import { TOYS_GAMES_PRODUCTS } from './toysGames.js';
+import { OTHER_PRODUCTS } from './otherProducts.js';
+import { CATEGORIES as MARKETPLACE_CATEGORIES, SUBCATEGORIES_BY_CATEGORY } from './categories.js';
+
+// Aggregate all 13 modules into the single unified marketplace catalog
 export const FEATURED_PRODUCTS = [
-  {
-    id: "prod-1",
-    name: "Apple iPhone 15 Pro (128 GB) - Natural Titanium",
-    brand: "APPLE",
-    category: "Smartphones",
-    price: 119900,
-    oldPrice: 141900,
-    discount: 15,
-    rating: 4.9,
-    reviewsCount: 1240,
-    badge: "Amazon's Choice",
-    inStock: true,
-    deliveryDate: "Tomorrow, 2 PM",
-    image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=600&q=80",
-    description: "Forged in titanium and featuring the groundbreaking A17 Pro chip, a customizable Action button, and a more versatile Pro camera system.",
-    specs: ["128GB Storage", "Titanium Frame", "A17 Pro Chip", "48MP Main Camera", "USB-C with USB 3 Speeds"],
-    dealEndTime: 14400
-  },
-  {
-    id: "prod-2",
-    name: "Apple MacBook Air 13.6\" M3 Chip (8GB RAM, 256GB SSD) - Space Grey",
-    brand: "APPLE",
-    category: "Laptops",
-    price: 99900,
-    oldPrice: 124900,
-    discount: 20,
-    rating: 4.8,
-    reviewsCount: 890,
-    badge: "Top Rated",
-    inStock: true,
-    deliveryDate: "Tomorrow, 5 PM",
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80",
-    description: "Incredibly thin and fast laptop with M3 chip, Liquid Retina display, 1080p FaceTime HD camera, and up to 18 hours battery life.",
-    specs: ["8GB Unified Memory", "256GB SSD", "13.6-inch Liquid Retina", "M3 8-Core CPU", "MagSafe 3 Charging"],
-    dealEndTime: 18000
-  },
-  {
-    id: "prod-3",
-    name: "Apple AirPods Pro (2nd Gen) with MagSafe Case (USB-C)",
-    brand: "APPLE",
-    category: "Audio",
-    price: 23900,
-    oldPrice: 26900,
-    discount: 11,
-    rating: 4.9,
-    reviewsCount: 2350,
-    badge: "Best Seller",
-    inStock: true,
-    deliveryDate: "Tomorrow, 11 AM",
-    image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80",
-    description: "Up to 2x more Active Noise Cancellation, Adaptive Audio, and Personalized Spatial Audio with dynamic head tracking.",
-    specs: ["H2 Apple Silicon", "USB-C MagSafe Case", "Up to 30 hrs Battery", "IP54 Dust & Sweat Resistant"],
-    dealEndTime: 9600
-  },
-  {
-    id: "prod-4",
-    name: "Samsung Galaxy S24 Ultra 5G (Titanium Gray, 12GB RAM, 256GB)",
-    brand: "SAMSUNG",
-    category: "Smartphones",
-    price: 109999,
-    oldPrice: 144900,
-    discount: 24,
-    rating: 4.7,
-    reviewsCount: 940,
-    badge: "Deal of the Day",
-    inStock: true,
-    deliveryDate: "Tomorrow, 3 PM",
-    image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=600&q=80",
-    description: "Galaxy AI powered flagship camera, titanium armor frame, built-in S Pen, and Snapdragon 8 Gen 3 Processor with vapor chamber cooling.",
-    specs: ["12GB RAM", "256GB Storage", "200MP Quad Tele Camera", "S Pen Included", "5000 mAh Battery"],
-    dealEndTime: 7200
-  },
-  {
-    id: "prod-5",
-    name: "Sony WH-1000XM5 Wireless Noise Canceling Headphones - Black",
-    brand: "SONY",
-    category: "Audio",
-    price: 26990,
-    oldPrice: 32990,
-    discount: 18,
-    rating: 4.9,
-    reviewsCount: 1560,
-    badge: "Editor's Pick",
-    inStock: true,
-    deliveryDate: "Tomorrow, 6 PM",
-    image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=600&q=80",
-    description: "Industry-leading noise cancellation with two processors and 8 microphones for superior calls and Hi-Res wireless audio.",
-    specs: ["30-hour Battery Life", "Speak-to-Chat", "Multipoint Bluetooth 5.2", "Ultra-comfortable fit"],
-    dealEndTime: 12000
-  },
-  {
-    id: "prod-6",
-    name: "Apple iPad Air 11\" M2 (128 GB, Wi-Fi) - Space Grey",
-    brand: "APPLE",
-    category: "Tablets",
-    price: 54900,
-    oldPrice: 59900,
-    discount: 8,
-    rating: 4.8,
-    reviewsCount: 620,
-    badge: "New Release",
-    inStock: true,
-    deliveryDate: "Tomorrow, 1 PM",
-    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=600&q=80",
-    description: "Fresh M2 chip performance with brilliant Liquid Retina display, landscape 12MP front camera, and Apple Pencil Pro support.",
-    specs: ["128GB Storage", "Liquid Retina Display", "M2 Chip", "Touch ID", "Wi-Fi 6E"],
-    dealEndTime: 15000
-  },
-  {
-    id: "prod-7",
-    name: "OnePlus 12 (Flowy Emerald, 16GB RAM, 512GB Storage)",
-    brand: "ONEPLUS",
-    category: "Smartphones",
-    price: 69999,
-    oldPrice: 79999,
-    discount: 12,
-    rating: 4.7,
-    reviewsCount: 840,
-    badge: "Trending",
-    inStock: true,
-    deliveryDate: "Tomorrow, 4 PM",
-    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80",
-    description: "Snapdragon 8 Gen 3, 4th Gen Hasselblad Camera for Mobile, 2K 120 Hz ProXDR Display, and 100W SUPERVOOC charging.",
-    specs: ["16GB LPDDR5X RAM", "512GB Storage", "Hasselblad 50MP Camera", "5400 mAh Battery", "100W Fast Charger in Box"],
-    dealEndTime: 11000
-  },
-  {
-    id: "prod-8",
-    name: "Dell XPS 15 9530 (13th Gen Intel i7, 16GB, 1TB SSD, RTX 4050)",
-    brand: "DELL",
-    category: "Laptops",
-    price: 169990,
-    oldPrice: 198900,
-    discount: 15,
-    rating: 4.6,
-    reviewsCount: 430,
-    badge: "High Performance",
-    inStock: true,
-    deliveryDate: "Day after tomorrow",
-    image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=600&q=80",
-    description: "Stunning 15.6\" OLED 3.5K display, machined aluminum chassis, carbon fiber palm rest, and dedicated NVIDIA GeForce RTX graphics.",
-    specs: ["Intel Core i7-13700H", "16GB DDR5 RAM", "1TB NVMe SSD", "RTX 4050 6GB", "15.6\" OLED Display"],
-    dealEndTime: 21600
-  },
-  {
-    id: "prod-9",
-    name: "Apple Watch Series 9 GPS 45mm - Midnight Aluminum Case",
-    brand: "APPLE",
-    category: "Wearables",
-    price: 39900,
-    oldPrice: 44900,
-    discount: 11,
-    rating: 4.8,
-    reviewsCount: 1120,
-    badge: "Best Seller",
-    inStock: true,
-    deliveryDate: "Tomorrow, 11 AM",
-    image: "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=600&q=80",
-    description: "S9 SiP chip, magical Double Tap gesture control, brighter Always-On display, ECG app, and advanced cycle tracking.",
-    specs: ["S9 SiP Chip", "45mm Case", "Double Tap Gesture", "ECG & Blood Oxygen", "18-Hour Battery"],
-    dealEndTime: 8400
-  },
-  {
-    id: "prod-10",
-    name: "Sony PlayStation 5 Console (Slim Disc Edition)",
-    brand: "SONY",
-    category: "Gaming",
-    price: 49990,
-    oldPrice: 54990,
-    discount: 9,
-    rating: 4.9,
-    reviewsCount: 3100,
-    badge: "Lightning Deal",
-    inStock: true,
-    deliveryDate: "Tomorrow, 7 PM",
-    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80",
-    description: "Experience lightning fast loading with an ultra-high speed SSD, deeper immersion with haptic feedback, adaptive triggers, and 3D Audio.",
-    specs: ["1TB Custom SSD", "DualSense Wireless Controller", "4K-TV Gaming up to 120fps", "Ray Tracing", "Tempest 3D AudioTech"],
-    dealEndTime: 5400
-  }
+  ...ELECTRONICS_PRODUCTS,
+  ...GROCERY_PRODUCTS,
+  ...WOMENS_FASHION_PRODUCTS,
+  ...FASHION_ACCESSORIES_PRODUCTS,
+  ...JEWELLERY_PRODUCTS,
+  ...BEAUTY_PRODUCTS,
+  ...MENS_FASHION_PRODUCTS,
+  ...FOOTWEAR_PRODUCTS,
+  ...HOME_KITCHEN_PRODUCTS,
+  ...SPORTS_PRODUCTS,
+  ...BOOKS_STATIONERY_PRODUCTS,
+  ...TOYS_GAMES_PRODUCTS,
+  ...OTHER_PRODUCTS,
 ];
+
+// Re-export full 13-category hierarchy for marketplace navigation
+export const CATEGORIES = MARKETPLACE_CATEGORIES;
+export { SUBCATEGORIES_BY_CATEGORY };
 
 export const LIGHTNING_DEALS = [
   {
     id: "prod-4",
     title: "Samsung Galaxy S24 Ultra 5G",
-    category: "Smartphones",
+    category: "Electronics",
     discount: 24,
     price: 109999,
     oldPrice: 144900,
@@ -197,7 +50,7 @@ export const LIGHTNING_DEALS = [
   {
     id: "prod-2",
     title: "Apple MacBook Air 13.6\" M3 Chip",
-    category: "Laptops",
+    category: "Electronics",
     discount: 20,
     price: 99900,
     oldPrice: 124900,
@@ -209,7 +62,7 @@ export const LIGHTNING_DEALS = [
   {
     id: "prod-5",
     title: "Sony WH-1000XM5 Wireless Headphones",
-    category: "Audio",
+    category: "Electronics",
     discount: 18,
     price: 26990,
     oldPrice: 32990,
@@ -221,7 +74,7 @@ export const LIGHTNING_DEALS = [
   {
     id: "prod-10",
     title: "Sony PlayStation 5 Console (Slim Disc)",
-    category: "Gaming",
+    category: "Electronics",
     discount: 9,
     price: 49990,
     oldPrice: 54990,
@@ -229,17 +82,55 @@ export const LIGHTNING_DEALS = [
     timeLeftSeconds: 4320,
     image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80",
     badge: "Almost Sold Out"
+  },
+  {
+    id: "groc-1",
+    title: "India Gate Basmati Rice Classic 5kg",
+    category: "Grocery & Food",
+    discount: 20,
+    price: 925,
+    oldPrice: 1150,
+    claimedPercentage: 68,
+    timeLeftSeconds: 11200,
+    image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80",
+    badge: "Lightning Deal"
+  },
+  {
+    id: "wom-1",
+    title: "BIBA Floral Print Pure Cotton Anarkali Set",
+    category: "Women's Fashion",
+    discount: 50,
+    price: 2999,
+    oldPrice: 5999,
+    claimedPercentage: 88,
+    timeLeftSeconds: 8400,
+    image: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=600&q=80",
+    badge: "Deal of the Day"
+  },
+  {
+    id: "jew-1",
+    title: "GIVA 925 Sterling Silver Solitaire Pendant",
+    category: "Jewellery",
+    discount: 40,
+    price: 1799,
+    oldPrice: 2999,
+    claimedPercentage: 94,
+    timeLeftSeconds: 5200,
+    image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80",
+    badge: "Limited Stock"
+  },
+  {
+    id: "home-1",
+    title: "Prestige Deluxe Alpha SS Pressure Cooker 3L",
+    category: "Home & Kitchen",
+    discount: 23,
+    price: 2199,
+    oldPrice: 2840,
+    claimedPercentage: 79,
+    timeLeftSeconds: 13500,
+    image: "https://images.unsplash.com/photo-1584990347449-307f59d4c7b8?auto=format&fit=crop&w=600&q=80",
+    badge: "Lightning Deal"
   }
-];
-
-export const CATEGORIES = [
-  { id: "all", name: "All Categories", icon: "LayoutGrid" },
-  { id: "Smartphones", name: "Mobile Phones", icon: "Smartphone" },
-  { id: "Laptops", name: "Laptops & PCs", icon: "Laptop" },
-  { id: "Audio", name: "Headphones & Audio", icon: "Headphones" },
-  { id: "Tablets", name: "Tablets & e-Readers", icon: "Tablet" },
-  { id: "Wearables", name: "Smartwatches", icon: "Watch" },
-  { id: "Gaming", name: "Gaming Consoles", icon: "Gamepad2" }
 ];
 
 export const PRESET_BUNDLES = [
@@ -275,6 +166,28 @@ export const PRESET_BUNDLES = [
     savings: 47990,
     discountPercent: 27,
     badge: "BEST VALUE"
+  },
+  {
+    id: "bundle-festive-ethnic",
+    title: "Grand Festive Celebration Combo",
+    subtitle: "Handcrafted Anarkali suit set + 925 silver solitaire pendant + ethnic tote",
+    items: ["wom-1", "jew-1", "acc-1"],
+    totalOriginal: 12988,
+    bundlePrice: 5999,
+    savings: 6989,
+    discountPercent: 54,
+    badge: "FESTIVE COMBO"
+  },
+  {
+    id: "bundle-smart-kitchen",
+    title: "Masterchef Modern Kitchen Bundle",
+    subtitle: "Stainless steel pressure cooker + Rapid Air Fryer + Borosil containers",
+    items: ["home-1", "home-7", "home-14"],
+    totalOriginal: 14425,
+    bundlePrice: 9499,
+    savings: 4926,
+    discountPercent: 34,
+    badge: "KITCHEN ESSENTIAL"
   }
 ];
 
@@ -282,19 +195,19 @@ export const VALUE_PROPS = [
   {
     id: 1,
     title: "FREE EXPRESS DELIVERY",
-    desc: "Guaranteed next-day delivery on Prime eligible products",
+    desc: "Guaranteed next-day delivery on 1,000+ Prime eligible marketplace products",
     icon: "Truck"
   },
   {
     id: 2,
     title: "AI BUNDLE SAVINGS",
-    desc: "Save up to 30% extra with intelligent multi-item bundle algorithms",
+    desc: "Save up to 35% extra with intelligent multi-item bundle algorithms",
     icon: "Tag"
   },
   {
     id: 3,
     title: "100% AUTHENTIC BRANDS",
-    desc: "Direct brand warranties with verified manufacturer serials",
+    desc: "Direct brand warranties with verified manufacturer serials & seals",
     icon: "ShieldCheck"
   },
   {
@@ -315,13 +228,13 @@ export const HOW_IT_WORKS_STEPS = [
   {
     step: "02",
     title: "AI compares products",
-    desc: "Our neural algorithms analyze compatibility, price histories, and stackable discounts across 10,000+ top products.",
+    desc: "Our neural algorithms analyze compatibility, price histories, and stackable discounts across 1,000+ marketplace products.",
     icon: "Cpu"
   },
   {
     step: "03",
     title: "Get best bundle & savings",
-    desc: "Review your personalized multi-product bundle with unlocked savings up to 30% and checkout in one click.",
+    desc: "Review your personalized multi-product bundle with unlocked savings up to 35% and checkout in one click.",
     icon: "Sparkles"
   }
 ];

@@ -81,12 +81,22 @@ export default function Navbar({
 
   const navLinks = [
     { name: "Today's Deals", action: onOpenDeals },
+<<<<<<< ours
     { name: "Mobile Phones", action: () => onSelectCategory && onSelectCategory('Smartphones') },
     { name: "Laptops & PCs", action: () => onSelectCategory && onSelectCategory('Laptops') },
     { name: "Headphones & Audio", action: () => onSelectCategory && onSelectCategory('Audio') },
     { name: "Tablets", action: () => onSelectCategory && onSelectCategory('Tablets') },
     { name: "AI Smart Bundles", action: () => onTriggerAISearch && onTriggerAISearch("Top AI Recommended Bundle") },
     { name: "Customer Service", action: () => alert("IntentCartAI 24/7 Customer Support: 1800-INTENTCART (toll-free)") }
+=======
+    { name: "Electronics", action: () => onSelectCategory && onSelectCategory('Electronics') },
+    { name: "Grocery & Gourmet", action: () => onSelectCategory && onSelectCategory('Grocery & Food') },
+    { name: "Women's Fashion", action: () => onSelectCategory && onSelectCategory("Women's Fashion") },
+    { name: "Jewellery", action: () => onSelectCategory && onSelectCategory('Jewellery') },
+    { name: "Men's Fashion", action: () => onSelectCategory && onSelectCategory("Men's Fashion") },
+    { name: "Home & Kitchen", action: () => onSelectCategory && onSelectCategory('Home & Kitchen') },
+    { name: "AI Smart Bundles", action: () => onTriggerAISearch && onTriggerAISearch("Top AI Recommended Bundle") }
+>>>>>>> theirs
   ];
 
   return (
