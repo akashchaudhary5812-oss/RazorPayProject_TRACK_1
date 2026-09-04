@@ -41,7 +41,7 @@ async function AiEfficientSearch(req, res) {
         }
 
         if (!requirements) {
-            requirements = req.body && Object.keys(req.body).length > 0 ? req.body : { products: ["Mobile Phones"] };
+            requirements = req.body && Object.keys(req.body).length > 0 ? req.body : {};
         }
 
         const bundleResult = await generateBundles(requirements);
@@ -65,7 +65,7 @@ async function AiEfficientSearch(req, res) {
 async function getLatestBundles(req, res) {
     try {
         const latestReq = await aiModel.findOne().sort({ createdAt: -1 });
-        const requirements = latestReq || { products: ["Mobile Phones"], preferredBrands: ["Apple", "Samsung"] };
+        const requirements = latestReq ? latestReq.toObject() : {};
         
         const bundleResult = await generateBundles(requirements);
 

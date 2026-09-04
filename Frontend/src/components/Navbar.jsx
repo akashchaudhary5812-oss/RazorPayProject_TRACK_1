@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShoppingBag, Heart, User, Sparkles, Menu, X, Search, MapPin, ChevronDown, Flame, Globe } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShoppingBag, Heart, User, Sparkles, Menu, X, Search, MapPin, ChevronDown, Flame, Globe, Mic, MicOff } from 'lucide-react';
 import { CATEGORIES } from '../data/products';
 
 export default function Navbar({
@@ -19,6 +19,58 @@ export default function Navbar({
   const [searchInput, setSearchInput] = useState('');
   const [selectedSearchCategory, setSelectedSearchCategory] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN';
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event) => {
+      let text = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        text += event.results[i][0].transcript;
+      }
+      const trimmed = text.trim();
+      if (trimmed) {
+        setSearchInput(trimmed);
+      }
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
+    };
+  }, []);
+
+  const toggleVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      if (onTriggerAISearch) onTriggerAISearch(searchInput);
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        if (recognitionRef.current) recognitionRef.current.start();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -115,14 +167,30 @@ export default function Navbar({
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search BundleAI, brands, products or ask for deals..."
-              className="w-full px-3 py-2 text-sm text-slate-900 placeholder-slate-400 font-medium focus:outline-none"
+              placeholder={isListening ? "Listening to your voice... Speak now" : "Search BundleAI, brands, products or ask for deals..."}
+              className={`w-full px-3 py-2 text-sm text-slate-900 placeholder-slate-400 font-medium focus:outline-none ${
+                isListening ? 'bg-rose-50 text-rose-800 placeholder-rose-400 font-semibold' : ''
+              }`}
             />
+
+            {/* Voice Assistant Mic Button */}
+            <button
+              type="button"
+              onClick={toggleVoiceSearch}
+              className={`px-3 py-2.5 flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
+                isListening
+                  ? 'bg-rose-500 text-white animate-pulse'
+                  : 'bg-slate-50 hover:bg-slate-200 text-slate-600 hover:text-teal-700'
+              }`}
+              title={isListening ? "Listening... (Click to stop)" : "Speak your search query"}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
 
             {/* Search Button */}
             <button
               type="submit"
-              className="bg-amber-400 hover:bg-amber-500 text-slate-950 px-4 py-2.5 flex items-center justify-center transition-colors shrink-0"
+              className="bg-amber-400 hover:bg-amber-500 text-slate-950 px-4 py-2.5 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
               title="Search"
             >
               <Search className="w-5 h-5" />
