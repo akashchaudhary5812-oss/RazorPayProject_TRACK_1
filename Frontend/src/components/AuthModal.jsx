@@ -594,7 +594,6 @@ export default function AuthModal({
 
         {/* Amazon-Style Header */}
         <div className="text-center pb-3 space-y-1">
-<<<<<<< ours
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 text-amber-900 text-[11px] font-extrabold uppercase tracking-wider mb-1">
             <img
               src="https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png"
@@ -602,10 +601,6 @@ export default function AuthModal({
               className="w-3.5 h-3.5 object-contain"
             />
             IntentCartAI Security
-=======
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 text-amber-950 text-[11px] font-extrabold uppercase tracking-wider mb-1">
-            <ShoppingBag className="w-3.5 h-3.5 text-amber-600" /> BundleAI
->>>>>>> theirs
           </div>
           
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">
