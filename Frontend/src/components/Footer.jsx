@@ -28,10 +28,10 @@ export default function Footer() {
               Get to Know Us
             </h4>
             <ul className="space-y-2 text-slate-400 font-medium">
-              <li><a href="#" className="hover:text-white hover:underline transition-colors">About BundleAI</a></li>
+              <li><a href="#" className="hover:text-white hover:underline transition-colors">About IntentCartAI</a></li>
               <li><a href="#" className="hover:text-white hover:underline transition-colors">Careers & AI Research</a></li>
               <li><a href="#" className="hover:text-white hover:underline transition-colors">Press Releases</a></li>
-              <li><a href="#" className="hover:text-white hover:underline transition-colors">BundleAI Science & Algorithms</a></li>
+              <li><a href="#" className="hover:text-white hover:underline transition-colors">IntentCartAI Science & Algorithms</a></li>
             </ul>
           </div>
 
@@ -54,7 +54,7 @@ export default function Footer() {
               Make Money with Us
             </h4>
             <ul className="space-y-2 text-slate-400 font-medium">
-              <li><a href="#" className="hover:text-white hover:underline transition-colors">Sell on BundleAI</a></li>
+              <li><a href="#" className="hover:text-white hover:underline transition-colors">Sell on IntentCartAI</a></li>
               <li><a href="#" className="hover:text-white hover:underline transition-colors">Protect & Build Your Brand</a></li>
               <li><a href="#" className="hover:text-white hover:underline transition-colors">Become an Affiliate</a></li>
               <li><a href="#" className="hover:text-white hover:underline transition-colors">Advertise Your Products</a></li>
@@ -79,11 +79,13 @@ export default function Footer() {
         {/* 3. LOGO & REGIONAL BAR */}
         <div className="pt-8 pb-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-white">
-              <ShoppingBag className="w-4 h-4" />
-            </div>
+            <img
+              src="https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png"
+              alt="IntentCartAI Logo"
+              className="w-8 h-8 rounded-lg object-contain bg-white/10 p-0.5 border border-white/20"
+            />
             <span className="font-anton text-2xl text-white tracking-wide">
-              BUNDLE<span className="text-teal-400">AI</span>
+              INTENT<span className="text-[#00BFA5]">CART</span><span className="text-amber-400 text-lg ml-0.5">AI</span>
             </span>
           </div>
 
@@ -104,7 +106,7 @@ export default function Footer() {
 
         {/* 4. COPYRIGHT & LEGAL NOTICES */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 font-medium gap-3">
-          <p>© {new Date().getFullYear()} BundleAI Technologies Inc. or its affiliates. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} IntentCartAI Technologies Inc. or its affiliates. All rights reserved.</p>
           <div className="flex items-center gap-5">
             <a href="#" className="hover:text-slate-300 transition-colors">Conditions of Use</a>
             <a href="#" className="hover:text-slate-300 transition-colors">Privacy Notice</a>

@@ -48,7 +48,7 @@ export default function Navbar({
     recognitionRef.current = recognition;
     return () => {
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
+        try { recognitionRef.current.stop(); } catch { }
       }
     };
   }, []);
@@ -86,12 +86,12 @@ export default function Navbar({
     { name: "Headphones & Audio", action: () => onSelectCategory && onSelectCategory('Audio') },
     { name: "Tablets", action: () => onSelectCategory && onSelectCategory('Tablets') },
     { name: "AI Smart Bundles", action: () => onTriggerAISearch && onTriggerAISearch("Top AI Recommended Bundle") },
-    { name: "Customer Service", action: () => alert("BundleAI 24/7 Customer Support: 1800-BUNDLE-AI (toll-free)") }
+    { name: "Customer Service", action: () => alert("IntentCartAI 24/7 Customer Support: 1800-INTENTCART (toll-free)") }
   ];
 
   return (
     <header className="sticky top-0 z-40 w-full shadow-md">
-      
+
       {/* 1. TOP UTILITY STRIP (Amazon-style deliver-to, language, help) */}
       <div className="bg-[#0F172A] text-slate-300 text-xs px-4 sm:px-6 py-1.5 flex items-center justify-between border-b border-slate-800 hidden md:flex">
         <div className="flex items-center gap-4">
@@ -111,14 +111,14 @@ export default function Navbar({
             <span>EN / INR ₹</span>
           </div>
           <a href="#how-it-works" className="hover:text-white transition-colors">How Bundling Works</a>
-          <button onClick={() => alert("Customer Support: support@bundleai.com")} className="hover:text-white transition-colors">Help & FAQ</button>
+          <button onClick={() => alert("Customer Support: support@intentcartai.com")} className="hover:text-white transition-colors">Help & FAQ</button>
         </div>
       </div>
 
       {/* 2. MAIN HEADER BAR (Dark Slate/Navy high-contrast e-commerce bar) */}
       <div className="bg-[#1E293B] px-4 sm:px-6 py-2.5 sm:py-3 text-white">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
-          
+
           {/* LOGO */}
           <div className="flex items-center gap-3 shrink-0">
             <button
@@ -129,13 +129,15 @@ export default function Navbar({
               <Menu className="w-6 h-6" />
             </button>
 
-            <a href="#" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#00BFA5] via-[#0D9488] to-emerald-600 flex items-center justify-center shadow-md shadow-teal-500/20 group-hover:scale-105 transition-transform">
-                <ShoppingBag className="w-5 h-5 text-white" />
-              </div>
+            <a href="#" className="flex items-center gap-2.5 group">
+              <img
+                src="https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png"
+                alt="IntentCartAI Logo"
+                className="w-9 h-9 sm:w-38 sm:h-full rounded-xl object-contain shadow-md shadow-teal-500/20 group-hover:scale-105 transition-transform bg-white/10 p-0.5 border border-white/20"
+              />
               <div className="flex flex-col">
                 <span className="font-anton text-2xl sm:text-3xl tracking-wide text-white leading-none">
-                  BUNDLE<span className="text-[#00BFA5]">AI</span>
+                  INTENT<span className="text-[#00BFA5]">CART</span><span className="text-amber-400 text-xl sm:text-2xl ml-0.5">AI</span>
                 </span>
                 <span className="text-[9px] text-teal-300 font-bold uppercase tracking-widest hidden sm:block">
                   Smart E-Commerce
@@ -167,21 +169,19 @@ export default function Navbar({
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={isListening ? "Listening to your voice... Speak now" : "Search BundleAI, brands, products or ask for deals..."}
-              className={`w-full px-3 py-2 text-sm text-slate-900 placeholder-slate-400 font-medium focus:outline-none ${
-                isListening ? 'bg-rose-50 text-rose-800 placeholder-rose-400 font-semibold' : ''
-              }`}
+              placeholder={isListening ? "Listening to your voice... Speak now" : "Search IntentCartAI, brands, products or ask for deals..."}
+              className={`w-full px-3 py-2 text-sm text-slate-900 placeholder-slate-400 font-medium focus:outline-none ${isListening ? 'bg-rose-50 text-rose-800 placeholder-rose-400 font-semibold' : ''
+                }`}
             />
 
             {/* Voice Assistant Mic Button */}
             <button
               type="button"
               onClick={toggleVoiceSearch}
-              className={`px-3 py-2.5 flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
-                isListening
-                  ? 'bg-rose-500 text-white animate-pulse'
-                  : 'bg-slate-50 hover:bg-slate-200 text-slate-600 hover:text-teal-700'
-              }`}
+              className={`px-3 py-2.5 flex items-center justify-center transition-colors shrink-0 cursor-pointer ${isListening
+                ? 'bg-rose-500 text-white animate-pulse'
+                : 'bg-slate-50 hover:bg-slate-200 text-slate-600 hover:text-teal-700'
+                }`}
               title={isListening ? "Listening... (Click to stop)" : "Speak your search query"}
             >
               {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -210,7 +210,7 @@ export default function Navbar({
 
           {/* RIGHT ACTION CLUSTER */}
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            
+
             {/* Account & Lists Area */}
             <button
               onClick={onOpenProfile}
@@ -292,7 +292,7 @@ export default function Navbar({
       {/* 3. SECONDARY SUB-NAV BAR (Amazon "All" & Quick department links) */}
       <div className="bg-[#0F172A] px-4 sm:px-6 py-1.5 text-white border-t border-slate-750 flex items-center justify-between overflow-x-auto text-xs font-semibold no-scrollbar">
         <div className="flex items-center gap-2 shrink-0">
-          
+
           {/* "☰ All" Drawer Trigger */}
           <button
             onClick={onOpenCategoryDrawer}

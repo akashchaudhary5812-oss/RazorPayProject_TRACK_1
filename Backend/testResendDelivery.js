@@ -11,7 +11,7 @@ require('dotenv').config();
 const { Resend } = require('resend');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM = process.env.RESEND_FROM || 'BundleAI <onboarding@resend.dev>';
+const RESEND_FROM = process.env.RESEND_FROM || 'IntentCartAI <onboarding@resend.dev>';
 
 const RECIPIENT_A = 'abhishekyadav44998@gmail.com'; // Resend account owner email
 const RECIPIENT_B = 'abhijeet123@gmail.com';         // Secondary test recipient

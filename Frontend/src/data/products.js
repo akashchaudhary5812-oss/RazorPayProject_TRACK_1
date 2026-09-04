@@ -245,8 +245,8 @@ export const CATEGORIES = [
 export const PRESET_BUNDLES = [
   {
     id: "bundle-apple-pro",
-    title: "Ultimate Apple Ecosystem Bundle",
-    subtitle: "Matched by BundleAI for maximum productivity & ecosystem synergy",
+    title: "Flagship Creator & Productivity Suite",
+    subtitle: "Matched by IntentCartAI for maximum productivity & ecosystem synergy",
     items: ["prod-1", "prod-2", "prod-3"],
     totalOriginal: 293700,
     bundlePrice: 228900,

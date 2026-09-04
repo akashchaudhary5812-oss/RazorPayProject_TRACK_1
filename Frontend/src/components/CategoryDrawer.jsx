@@ -152,7 +152,14 @@ export default function CategoryDrawer({
 
         {/* Drawer Footer */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 font-medium flex items-center justify-between">
-          <span>BundleAI E-Commerce v2.4</span>
+          <div className="flex items-center gap-1.5">
+            <img
+              src="https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png"
+              alt="IntentCartAI"
+              className="w-3.5 h-3.5 object-contain"
+            />
+            <span>IntentCartAI E-Commerce v2.4</span>
+          </div>
           <button
             onClick={() => {
               onClose();

@@ -411,7 +411,12 @@ export default function AuthModal({
         {/* Brand / Step Header */}
         <div className="text-center pb-3 space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 text-amber-900 text-[11px] font-extrabold uppercase tracking-wider mb-1">
-            <ShoppingBag className="w-3.5 h-3.5 text-amber-600" /> BundleAI Security
+            <img
+              src="https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png"
+              alt="IntentCartAI"
+              className="w-3.5 h-3.5 object-contain"
+            />
+            IntentCartAI Security
           </div>
           
           <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">

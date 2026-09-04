@@ -204,8 +204,9 @@ export default function ProductDetailsModal({
                   <ShieldCheck className="w-4 h-4" />
                   <span>In Stock</span>
                 </div>
-                <div className="text-[11px] text-slate-500">
-                  Ships from: <strong className="text-slate-800">BundleAI Express</strong>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-teal-500" />
+                  Ships from: <strong className="text-slate-800">IntentCartAI Express</strong>
                 </div>
                 <div className="text-[11px] text-slate-500">
                   Sold by: <strong className="text-slate-800">Verified Direct Brand Retail</strong>

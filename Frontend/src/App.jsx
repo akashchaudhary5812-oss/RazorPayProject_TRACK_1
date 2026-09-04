@@ -24,7 +24,7 @@ export default function App() {
   // Cart & Wishlist State
   const [cart, setCart] = useState(() => {
     try {
-      const saved = localStorage.getItem('bundleai_cart');
+      const saved = localStorage.getItem('intentcartai_cart') || localStorage.getItem('bundleai_cart');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -33,7 +33,7 @@ export default function App() {
 
   const [wishlist, setWishlist] = useState(() => {
     try {
-      const saved = localStorage.getItem('bundleai_wishlist');
+      const saved = localStorage.getItem('intentcartai_wishlist') || localStorage.getItem('bundleai_wishlist');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -43,7 +43,7 @@ export default function App() {
   // User Authentication State
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('bundleai_user');
+      const saved = localStorage.getItem('intentcartai_user') || localStorage.getItem('bundleai_user');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -65,7 +65,7 @@ export default function App() {
   // Persist Cart & Wishlist & User in localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('bundleai_cart', JSON.stringify(cart));
+      localStorage.setItem('intentcartai_cart', JSON.stringify(cart));
     } catch (e) {
       console.warn("Storage error", e);
     }
@@ -73,7 +73,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('bundleai_wishlist', JSON.stringify(wishlist));
+      localStorage.setItem('intentcartai_wishlist', JSON.stringify(wishlist));
     } catch (e) {
       console.warn("Storage error", e);
     }
@@ -82,8 +82,9 @@ export default function App() {
   useEffect(() => {
     try {
       if (currentUser) {
-        localStorage.setItem('bundleai_user', JSON.stringify(currentUser));
+        localStorage.setItem('intentcartai_user', JSON.stringify(currentUser));
       } else {
+        localStorage.removeItem('intentcartai_user');
         localStorage.removeItem('bundleai_user');
       }
     } catch (e) {
@@ -352,6 +353,7 @@ export default function App() {
         cartItems={cart}
         onOrderSuccess={() => {
           setCart([]);
+          localStorage.removeItem('intentcartai_cart');
           localStorage.removeItem('bundleai_cart');
         }}
       />

@@ -24,7 +24,7 @@ export default function CTASection({ onTriggerAISearch }) {
           </h2>
 
           <p className="text-slate-200 text-base sm:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
-            Stop searching items one by one. Let BundleAI compare compatibility, pricing history, and stack discounts into a single checkout.
+            Stop searching items one by one. Let IntentCartAI compare compatibility, pricing history, and stack discounts into a single checkout.
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">

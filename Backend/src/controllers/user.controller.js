@@ -197,7 +197,7 @@ const sendOtp = async (req, res) => {
         // Send OTP via Resend SDK if configured
         if (resendClient) {
             try {
-                const sender = process.env.RESEND_FROM || 'BundleAI <onboarding@resend.dev>';
+                const sender = process.env.RESEND_FROM || 'IntentCartAI <onboarding@resend.dev>';
                 const { data, error } = await resendClient.emails.send({
                     from: sender,
                     to: [normalizedEmail],

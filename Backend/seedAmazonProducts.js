@@ -251,7 +251,7 @@ async function seedAmazonProducts() {
 
     const accessKey = process.env.AMAZON_PA_ACCESS_KEY;
     const secretKey = process.env.AMAZON_PA_SECRET_KEY;
-    const partnerTag = process.env.AMAZON_ASSOCIATE_TAG || "bundleai-21";
+    const partnerTag = process.env.AMAZON_ASSOCIATE_TAG || "intentcartai-21";
     const host = process.env.AMAZON_HOST || "webservices.amazon.in";
     const region = process.env.AMAZON_REGION || "eu-west-1";
 
