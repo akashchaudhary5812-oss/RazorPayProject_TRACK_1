@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
-import HeroSection from './components/HeroSection';
+import HeroBanner from './components/HeroBanner';
+import LightningDeals from './components/LightningDeals';
 import FeaturedProducts from './components/FeaturedProducts';
 import ValueProposition from './components/ValueProposition';
 import HowItWorks from './components/HowItWorks';
@@ -9,21 +10,147 @@ import Footer from './components/Footer';
 import AISearchModal from './components/AISearchModal';
 import CartWishlistModal from './components/CartWishlistModal';
 import BundlesPage from './components/BundlesPage';
+import ProductDetailsModal from './components/ProductDetailsModal';
+import CategoryDrawer from './components/CategoryDrawer';
+import CartPage from './components/CartPage';
+import CheckoutModal from './components/CheckoutModal';
+import AuthModal from './components/AuthModal';
+import { FEATURED_PRODUCTS } from './data/products';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('home'); // 'home' or 'bundles'
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'cart', 'bundles'
   const [activeRequirementId, setActiveRequirementId] = useState(null);
 
-  const [cart, setCart] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
-  
-  // Modals state
+  // Cart & Wishlist State
+  const [cart, setCart] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bundleai_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [wishlist, setWishlist] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bundleai_wishlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // User Authentication State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bundleai_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Modals & Drawers State
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [activeProduct, setActiveProduct] = useState(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerType, setDrawerType] = useState('cart'); // 'cart' or 'wishlist'
 
-  // Trigger AI Search Modal
+  // Persist Cart & Wishlist & User in localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('bundleai_cart', JSON.stringify(cart));
+    } catch (e) {
+      console.warn("Storage error", e);
+    }
+  }, [cart]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bundleai_wishlist', JSON.stringify(wishlist));
+    } catch (e) {
+      console.warn("Storage error", e);
+    }
+  }, [wishlist]);
+
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem('bundleai_user', JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem('bundleai_user');
+      }
+    } catch (e) {
+      console.warn("Storage error", e);
+    }
+  }, [currentUser]);
+
+  // Cart Handlers
+  const handleAddToCart = (product, quantity = 1) => {
+    const qtyToAdd = typeof quantity === 'number' && quantity > 0 ? quantity : 1;
+    setCart((prev) => {
+      const existingIdx = prev.findIndex((item) => item.id === product.id);
+      if (existingIdx > -1) {
+        const updated = [...prev];
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          quantity: (updated[existingIdx].quantity || 1) + qtyToAdd
+        };
+        return updated;
+      }
+      return [...prev, { ...product, quantity: qtyToAdd }];
+    });
+  };
+
+  const handleUpdateQuantity = (index, newQty) => {
+    setCart((prev) => {
+      const updated = [...prev];
+      if (newQty <= 0) {
+        return updated.filter((_, idx) => idx !== index);
+      }
+      updated[index] = { ...updated[index], quantity: newQty };
+      return updated;
+    });
+  };
+
+  const handleRemoveFromCart = (index) => {
+    setCart((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  // Wishlist Handlers
+  const handleToggleWishlist = (product) => {
+    setWishlist((prev) => {
+      const exists = prev.some((item) => item.id === product.id);
+      if (exists) {
+        return prev.filter((item) => item.id !== product.id);
+      } else {
+        return [...prev, product];
+      }
+    });
+  };
+
+  const handleRemoveFromWishlist = (productId) => {
+    setWishlist((prev) => prev.filter((item) => item.id !== productId));
+  };
+
+  const handleSaveForLater = (product, index) => {
+    handleToggleWishlist(product);
+    handleRemoveFromCart(index);
+  };
+
+  // Product View Details
+  const handleViewDetails = (product) => {
+    setActiveProduct(product);
+    setDetailsModalOpen(true);
+  };
+
+  // Trigger AI Search
   const handleTriggerAISearch = (query) => {
     setSearchQuery(query || '');
     setAiModalOpen(true);
@@ -36,43 +163,43 @@ export default function App() {
     setAiModalOpen(false);
   };
 
-  // Toggle Wishlist
-  const handleToggleWishlist = (product) => {
-    setWishlist((prev) => {
-      const exists = prev.some((item) => item.id === product.id);
-      if (exists) {
-        return prev.filter((item) => item.id !== product.id);
-      } else {
-        return [...prev, product];
-      }
-    });
+  // Search Submission from Navbar
+  const handleSearchSubmit = (query, category) => {
+    setSearchQuery(query);
+    if (category && category !== 'all') {
+      setSelectedCategory(category);
+    }
+    if (currentView !== 'home') {
+      setCurrentView('home');
+    }
+    // Smooth scroll to products
+    const elem = document.getElementById('products');
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
-  // Add to Cart
-  const handleAddToCart = (product) => {
-    setCart((prev) => [...prev, product]);
-  };
+  const cartTotalAmount = cart.reduce(
+    (acc, item) => acc + (item.price * (item.quantity || 1)),
+    0
+  );
+  const totalCartItemCount = cart.reduce(
+    (acc, item) => acc + (item.quantity || 1),
+    0
+  );
 
-  // Remove item from Cart by index
-  const handleRemoveFromCart = (index) => {
-    setCart((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
-  // Remove item from Wishlist by ID
-  const handleRemoveFromWishlist = (productId) => {
-    setWishlist((prev) => prev.filter((item) => item.id !== productId));
-  };
-
+  // If in bundles page view
   if (currentView === 'bundles') {
     return (
-      <div className="min-h-screen bg-[#F4FAF8] text-[#0F172A]">
+      <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between">
         <BundlesPage
           requirementId={activeRequirementId}
           onBackToHome={() => setCurrentView('home')}
           onAddToCart={handleAddToCart}
+          onViewDetails={handleViewDetails}
         />
 
-        {/* Cart & Wishlist Drawer */}
+        {/* Cart & Wishlist Modal Drawer */}
         <CartWishlistModal
           isOpen={drawerOpen}
           onClose={() => setDrawerOpen(false)}
@@ -88,45 +215,93 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4FAF8] text-[#0F172A] flex flex-col justify-between selection:bg-[#00BFA5]/20 selection:text-[#064E3B]">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between selection:bg-amber-400 selection:text-slate-950">
       
       <div>
-        {/* Sticky Top Navbar */}
+        {/* Amazon-style Multi-tier E-commerce Header */}
         <Navbar
-          cartCount={cart.length}
+          cartCount={totalCartItemCount}
           wishlistCount={wishlist.length}
-          onOpenCart={() => {
-            setDrawerType('cart');
-            setDrawerOpen(true);
-          }}
+          cartTotal={cartTotalAmount}
+          onOpenCart={() => setCurrentView('cart')}
           onOpenWishlist={() => {
             setDrawerType('wishlist');
             setDrawerOpen(true);
           }}
-          onOpenProfile={() => alert("Profile Modal: Logged in as AI Premium Shopper")}
+          onOpenProfile={() => setAuthModalOpen(true)}
+          onOpenCategoryDrawer={() => setCategoryDrawerOpen(true)}
+          onTriggerAISearch={handleTriggerAISearch}
+          onSearchSubmit={handleSearchSubmit}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            if (currentView !== 'home') setCurrentView('home');
+            const elem = document.getElementById('products');
+            if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+          }}
+          onOpenDeals={() => {
+            if (currentView !== 'home') setCurrentView('home');
+            const elem = document.getElementById('deals');
+            if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+          }}
+          currentUser={currentUser}
         />
 
-        {/* Hero Section */}
-        <HeroSection onTriggerAISearch={handleTriggerAISearch} />
+        {/* VIEW CONDITIONAL RENDERING */}
+        {currentView === 'cart' ? (
+          /* Full 2-Column Amazon Cart Page */
+          <CartPage
+            cartItems={cart}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveFromCart}
+            onSaveForLater={handleSaveForLater}
+            onProceedToCheckout={() => setCheckoutModalOpen(true)}
+            onBackToShopping={() => setCurrentView('home')}
+          />
+        ) : (
+          /* Homepage E-Commerce Layout */
+          <>
+            {/* Amazon-style Panoramic Hero Slider & 4-Quadrant Category Feature Cards */}
+            <HeroBanner
+              onTriggerAISearch={handleTriggerAISearch}
+              onSelectCategory={(cat) => {
+                setSelectedCategory(cat);
+                const elem = document.getElementById('products');
+                if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+              }}
+              onViewDetails={handleViewDetails}
+              featuredProducts={FEATURED_PRODUCTS}
+            />
 
-        {/* Value Proposition Strip */}
-        <ValueProposition />
+            {/* Value Proposition Trust Strip */}
+            <ValueProposition />
 
-        {/* Top Featured Products */}
-        <FeaturedProducts
-          wishlist={wishlist}
-          toggleWishlist={handleToggleWishlist}
-          onAddToCart={handleAddToCart}
-        />
+            {/* Today's Lightning Deals with Live Countdown */}
+            <LightningDeals
+              onAddToCart={handleAddToCart}
+              onViewDetails={handleViewDetails}
+            />
 
-        {/* How It Works */}
-        <HowItWorks onTriggerAISearch={handleTriggerAISearch} />
+            {/* Featured & Best Sellers Product Grid with Category Pills & Sorting */}
+            <FeaturedProducts
+              wishlist={wishlist}
+              toggleWishlist={handleToggleWishlist}
+              onAddToCart={handleAddToCart}
+              onViewDetails={handleViewDetails}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+              searchQuery={searchQuery}
+            />
 
-        {/* CTA Section */}
-        <CTASection onTriggerAISearch={handleTriggerAISearch} />
+            {/* How Neural Bundling Works */}
+            <HowItWorks onTriggerAISearch={handleTriggerAISearch} />
+
+            {/* AI Commerce Call To Action */}
+            <CTASection onTriggerAISearch={handleTriggerAISearch} />
+          </>
+        )}
       </div>
 
-      {/* Footer */}
+      {/* Multi-Section Amazon Footer */}
       <Footer />
 
       {/* AI Search Modal */}
@@ -136,9 +311,61 @@ export default function App() {
         searchQuery={searchQuery}
         onAddBundleToCart={handleAddToCart}
         onOpenBundlesPage={handleOpenBundlesPage}
+        onViewDetails={handleViewDetails}
       />
 
-      {/* Cart & Wishlist Drawer */}
+      {/* Product Details Modal (Amazon-style 3-column view) */}
+      <ProductDetailsModal
+        product={activeProduct}
+        isOpen={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        isWishlisted={activeProduct ? wishlist.some((item) => item.id === activeProduct.id) : false}
+        onToggleWishlist={handleToggleWishlist}
+        onAddToCart={handleAddToCart}
+        onBuyNow={() => setCheckoutModalOpen(true)}
+      />
+
+      {/* Amazon-style "All" Category Drawer */}
+      <CategoryDrawer
+        isOpen={categoryDrawerOpen}
+        onClose={() => setCategoryDrawerOpen(false)}
+        currentUser={currentUser}
+        onOpenAuth={() => setAuthModalOpen(true)}
+        onSelectCategory={(cat) => {
+          setSelectedCategory(cat);
+          if (currentView !== 'home') setCurrentView('home');
+          const elem = document.getElementById('products');
+          if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onTriggerAISearch={handleTriggerAISearch}
+        onOpenDeals={() => {
+          if (currentView !== 'home') setCurrentView('home');
+          const elem = document.getElementById('deals');
+          if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
+
+      {/* Checkout Modal (Address -> Payment -> Review -> Confirmation) */}
+      <CheckoutModal
+        isOpen={checkoutModalOpen}
+        onClose={() => setCheckoutModalOpen(false)}
+        cartItems={cart}
+        onOrderSuccess={() => {
+          setCart([]);
+          localStorage.removeItem('bundleai_cart');
+        }}
+      />
+
+      {/* Auth Modal (Sign In / Register) */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        currentUser={currentUser}
+        onAuthSuccess={(user) => setCurrentUser(user)}
+        onSignOut={() => setCurrentUser(null)}
+      />
+
+      {/* Cart & Wishlist Quick Drawer */}
       <CartWishlistModal
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}

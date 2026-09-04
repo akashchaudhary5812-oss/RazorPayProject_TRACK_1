@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Sparkles, ShoppingBag, Check, Filter, SlidersHorizontal, ShieldCheck, Tag, Zap, RefreshCw } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { ArrowLeft, SlidersHorizontal, ArrowUpDown, Package, RefreshCw, AlertCircle } from 'lucide-react';
+import AmazonBundleSection from './AmazonBundleSection';
+import BundleSkeletonGrid from './BundleSkeletonGrid';
 
-export default function BundlesPage({ requirementId, onBackToHome, onAddToCart }) {
+export default function BundlesPage({ requirementId, onBackToHome, onAddToCart, onViewDetails }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bundles, setBundles] = useState([]);
@@ -11,7 +12,6 @@ export default function BundlesPage({ requirementId, onBackToHome, onAddToCart }
   // Filter & Sort State
   const [selectedBrandFilter, setSelectedBrandFilter] = useState('All');
   const [sortBy, setSortBy] = useState('savings'); // 'savings', 'discount', 'price_low', 'price_high'
-  const [addedBundles, setAddedBundles] = useState({});
 
   useEffect(() => {
     fetchBundles();
@@ -34,172 +34,76 @@ export default function BundlesPage({ requirementId, onBackToHome, onAddToCart }
         setBundles(data.bundles);
         setPreferences(data.preferences || null);
       } else {
-        setError("No bundles generated for this request.");
+        setError("No bundles currently match these preferences. Please adjust your criteria or browse our featured packages.");
       }
     } catch (err) {
       console.error("Bundles Page API Error:", err);
-      setError(`Failed to connect to /api/ai/bundles API (${err.message}). Ensure backend server is running.`);
+      setError("Unable to connect to the bundle service. Please ensure the server is active or try again shortly.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddBundleToCart = (bundleObj, idx) => {
-    if (!bundleObj) return;
-
-    bundleObj.products.forEach((p) => {
-      onAddToCart({
-        id: p.productId || p._id || `prod-${Math.random()}`,
-        name: p.productName,
-        brand: p.brandName,
-        price: p.price,
-        oldPrice: Math.round(p.price * 1.25),
-        discount: p.discount || 15,
-        image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=600&q=80"
-      });
-    });
-
-    setAddedBundles((prev) => ({ ...prev, [idx]: true }));
-    confetti({ particleCount: 110, spread: 85, origin: { y: 0.5 } });
-  };
+  // Collect unique brands from bundles
+  const availableBrands = ['All', ...new Set(
+    bundles.flatMap((b) => (b.products || []).map((p) => p.brandName || p.brand)).filter(Boolean)
+  )];
 
   // Filter & Sort Logic
-  const getFilteredAndSortedBundles = () => {
-    let list = [...bundles];
-
-    // Filter by Brand
-    if (selectedBrandFilter !== 'All') {
-      list = list.filter((b) =>
-        b.products.some((p) => p.brandName.toLowerCase() === selectedBrandFilter.toLowerCase())
+  const displayedBundles = [...bundles]
+    .filter((b) => {
+      if (selectedBrandFilter === 'All') return true;
+      return (b.products || []).some(
+        (p) => (p.brandName || p.brand || '').toLowerCase() === selectedBrandFilter.toLowerCase()
       );
-    }
-
-    // Sort
-    if (sortBy === 'savings') {
-      list.sort((a, b) => b.savings - a.savings);
-    } else if (sortBy === 'discount') {
-      list.sort((a, b) => b.savingsPercentage - a.savingsPercentage);
-    } else if (sortBy === 'price_low') {
-      list.sort((a, b) => a.bundleTotal - b.bundleTotal);
-    } else if (sortBy === 'price_high') {
-      list.sort((a, b) => b.bundleTotal - a.bundleTotal);
-    }
-
-    return list;
-  };
-
-  const displayedBundles = getFilteredAndSortedBundles();
+    })
+    .sort((a, b) => {
+      if (sortBy === 'savings') return (b.savings || 0) - (a.savings || 0);
+      if (sortBy === 'discount') return (b.savingsPercentage || 0) - (a.savingsPercentage || 0);
+      if (sortBy === 'price_low') return (a.bundleTotal || 0) - (b.bundleTotal || 0);
+      if (sortBy === 'price_high') return (b.bundleTotal || 0) - (a.bundleTotal || 0);
+      return 0;
+    });
 
   return (
-    <div className="min-h-screen bg-[#F4FAF8] text-[#0F172A] pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-24">
       
-      {/* TOP STICKY BAR */}
-      <div className="bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      {/* 1. TOP STICKY NAVIGATION BAR */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+          
           <button
             onClick={onBackToHome}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#00BFA5] transition-colors bg-slate-100 px-4 py-2 rounded-full"
+            className="flex items-center gap-2 text-xs font-bold text-teal-700 hover:text-teal-900 uppercase tracking-wider transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to Search
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Shopping</span>
           </button>
 
-          <div className="flex items-center gap-2">
-            <span className="font-anton text-2xl tracking-wide text-[#0F172A]">
-              BUNDLE<span className="text-[#00BFA5]">AI</span>
-            </span>
-            <span className="bg-[#00BFA5] text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
-              /api/ai/bundles
-            </span>
-          </div>
-
-          <button
-            onClick={fetchBundles}
-            className="p-2 rounded-full text-slate-500 hover:text-[#00BFA5] hover:bg-slate-100 transition-colors"
-            title="Refresh Bundles API"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pt-8 space-y-8">
-        
-        {/* PAGE HERO HEADER */}
-        <div className="bg-gradient-to-r from-[#0F4C5C] via-[#092D36] to-[#064E3B] rounded-[32px] p-6 sm:p-10 text-white shadow-xl relative overflow-hidden border border-[#00BFA5]/30">
-          <div className="relative z-10 space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-teal-200 text-xs font-semibold">
-              <Sparkles className="w-4 h-4 text-[#00BFA5]" /> Multi-Intersection Neural Engine
-            </div>
-
-            <h1 className="font-anton text-3xl sm:text-5xl md:text-6xl tracking-wide uppercase">
-              ALL GENERATED AI BUNDLES ({bundles.length})
-            </h1>
-
-            <p className="text-slate-200 text-sm sm:text-base font-medium max-w-2xl">
-              Calculated across 550+ real MongoDB products. Every bundle represents a &gt;1% relevance intersection match tailored to your parameters.
-            </p>
-
-            {/* Preference Chips */}
-            {preferences && (
-              <div className="pt-2 flex flex-wrap items-center gap-2">
-                {preferences.preferredBrands && preferences.preferredBrands.map((b, i) => (
-                  <span key={i} className="text-xs bg-[#00BFA5]/20 text-teal-200 px-3 py-1 rounded-full border border-[#00BFA5]/40 font-bold">
-                    ✓ Preferred Brand: {b}
-                  </span>
-                ))}
-                {preferences.endingPrice && (
-                  <span className="text-xs bg-white/10 text-white px-3 py-1 rounded-full border border-white/20 font-medium">
-                    Max Budget: ₹{preferences.endingPrice.toLocaleString('en-IN')}
-                  </span>
-                )}
+          {/* Filter & Sort Controls */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {availableBrands.length > 2 && (
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
+                <span>Brand:</span>
+                <select
+                  value={selectedBrandFilter}
+                  onChange={(e) => setSelectedBrandFilter(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                >
+                  {availableBrands.map((brand) => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* LOADING STATE */}
-        {loading && (
-          <div className="py-20 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full border-4 border-[#00BFA5]/20 border-t-[#00BFA5] animate-spin mx-auto" />
-            <h3 className="font-anton text-2xl text-slate-800 uppercase">FETCHING BUNDLES API...</h3>
-            <p className="text-slate-500 text-sm font-medium">Reading /api/ai/bundles endpoint</p>
-          </div>
-        )}
-
-        {/* ERROR STATE */}
-        {error && !loading && (
-          <div className="bg-rose-50 p-6 rounded-2xl border border-rose-200 text-rose-800 space-y-2">
-            <h3 className="font-bold text-base">Notice</h3>
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
-
-        {/* FILTER & SORT TOOLBAR */}
-        {!loading && bundles.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-card flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <SlidersHorizontal className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Filter Brand:</span>
-              <select
-                value={selectedBrandFilter}
-                onChange={(e) => setSelectedBrandFilter(e.target.value)}
-                className="bg-slate-50 text-xs font-bold text-slate-800 p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#00BFA5]"
-              >
-                <option value="All">All Brands</option>
-                <option value="Apple">Apple</option>
-                <option value="Samsung">Samsung</option>
-                <option value="OnePlus">OnePlus</option>
-                <option value="Google">Google</option>
-                <option value="Sony">Sony</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Sort By:</span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+              <span>Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-slate-50 text-xs font-bold text-slate-800 p-2 rounded-lg border border-slate-200 focus:outline-none focus:border-[#00BFA5]"
+                className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
               >
                 <option value="savings">Highest Savings (₹)</option>
                 <option value="discount">Highest Discount (%)</option>
@@ -208,142 +112,88 @@ export default function BundlesPage({ requirementId, onBackToHome, onAddToCart }
               </select>
             </div>
           </div>
-        )}
 
-        {/* BUNDLES LIST SHOWCASE */}
-        {!loading && displayedBundles.length > 0 && (
-          <div className="space-y-8">
-            {displayedBundles.map((bundle, idx) => (
-              <div
-                key={idx}
-                className="bg-white rounded-[28px] border border-slate-200/90 shadow-card hover:shadow-xl transition-all duration-300 p-6 sm:p-8 space-y-6"
+        </div>
+      </div>
+
+      {/* 2. AMAZON-STYLE BUNDLE HEADER */}
+      <div className="bg-[#0F172A] text-white py-10 px-4 sm:px-6 mb-8 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-extrabold uppercase tracking-wider">
+            <Package className="w-3.5 h-3.5 text-amber-400" /> Recommended Product Bundles
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Curated Shopping Bundles
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+            Pre-configured product bundles designed to work together seamlessly with stackable package discounts.
+          </p>
+        </div>
+      </div>
+
+      {/* 3. MAIN CONTENT CONTAINER */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        
+        {loading ? (
+          /* Multi-phase skeleton loading state with customer-friendly messages */
+          <BundleSkeletonGrid cardCount={5} />
+        ) : error ? (
+          /* Clean Customer-friendly Error / Empty State */
+          <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-slate-200 max-w-lg mx-auto space-y-4 shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Notice</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">{error}</p>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={fetchBundles}
+                className="px-5 py-2.5 bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-slate-800 transition-colors flex items-center gap-1.5"
               >
-                {/* BUNDLE HEADER */}
-                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="bg-[#00BFA5] text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-                        {idx === 0 ? 'BEST VALUE MATCH' : idx === 1 ? 'MAX SAVINGS' : 'DYNAMIC INTERSECTION BUNDLE'}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">Bundle #{idx + 1}</span>
-                    </div>
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Retry</span>
+              </button>
+              <button
+                type="button"
+                onClick={onBackToHome}
+                className="px-5 py-2.5 bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-amber-500 transition-colors"
+              >
+                Back to Store
+              </button>
+            </div>
+          </div>
+        ) : displayedBundles.length === 0 ? (
+          <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 max-w-md mx-auto space-y-3">
+            <p className="text-sm text-slate-600">No bundles match the selected brand filter.</p>
+            <button
+              onClick={() => setSelectedBrandFilter('All')}
+              className="text-xs font-bold text-teal-700 underline"
+            >
+              Reset Filters
+            </button>
+          </div>
+        ) : (
+          /* 4. RENDER AMAZON BUNDLE SECTIONS */
+          <div className="space-y-8">
+            <div className="text-xs font-semibold text-slate-500 flex items-center justify-between">
+              <span>Showing <strong>{displayedBundles.length}</strong> recommended bundles</span>
+            </div>
 
-                    <h2 className="font-anton text-2xl sm:text-4xl text-slate-900 mt-2 uppercase tracking-wide">
-                      {bundle.name}
-                    </h2>
-                  </div>
-
-                  {/* Savings Pill */}
-                  <div className="bg-emerald-50 border border-emerald-200 px-5 py-2.5 rounded-2xl text-right">
-                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Verified Bundle Savings</div>
-                    <div className="text-xl font-extrabold text-emerald-700">
-                      YOU SAVE ₹{bundle.savings ? bundle.savings.toLocaleString('en-IN') : '0'} ({bundle.savingsPercentage || 0}% OFF)
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI REASON BOX */}
-                <div className="bg-[#00BFA5]/10 p-4 rounded-2xl border border-[#00BFA5]/25 flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-[#00BFA5] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="text-xs font-extrabold text-[#064E3B] uppercase block">AI Recommendation Reason:</span>
-                    <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed mt-0.5">
-                      "{bundle.reason}"
-                    </p>
-                  </div>
-                </div>
-
-                {/* PREFERENCES MATCH BADGES */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {bundle.preferredBrandMatches && bundle.preferredBrandMatches.map((m, i) => (
-                    <span key={i} className="text-xs bg-[#0F4C5C]/10 text-[#0F4C5C] font-extrabold px-3 py-1 rounded-full border border-[#0F4C5C]/20 flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5 text-[#00BFA5]" /> {m.message || `Brand Match: ${m.brand}`}
-                    </span>
-                  ))}
-
-                  {bundle.matchedPreferences && bundle.matchedPreferences.map((pref, i) => (
-                    <span key={i} className="text-xs bg-slate-100 text-slate-700 font-semibold px-3 py-1 rounded-full border border-slate-200 flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" /> {pref}
-                    </span>
-                  ))}
-                </div>
-
-                {/* PRODUCTS INCLUDED GRID */}
-                <div>
-                  <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block mb-3">
-                    Included Products ({bundle.products ? bundle.products.length : 0}):
-                  </span>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {bundle.products && bundle.products.map((p, i) => (
-                      <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3.5 hover:bg-white transition-colors shadow-2xs">
-                        <div className="w-12 h-12 rounded-xl bg-white p-1 shrink-0 flex items-center justify-center border border-slate-100">
-                          <ShoppingBag className="w-6 h-6 text-[#00BFA5]" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-[#0D9488] uppercase tracking-wider block">
-                            {p.brandName}
-                          </span>
-                          <h4 className="font-bold text-slate-800 text-sm line-clamp-1">
-                            {p.productName}
-                          </h4>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="font-extrabold text-slate-900 text-xs">₹{p.price ? p.price.toLocaleString('en-IN') : 0}</span>
-                            {p.discount > 0 && (
-                              <span className="text-[9px] bg-[#00BFA5] text-white px-1.5 py-0.2 rounded font-extrabold">
-                                -{p.discount}%
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* PRICE & ADD BUNDLE ACTION BAR */}
-                <div className="bg-slate-900 text-white p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
-                  <div className="space-y-1 text-center sm:text-left">
-                    <div className="text-xs text-slate-400 font-medium">
-                      Individual Total Price: <span className="line-through">₹{bundle.individualTotal ? bundle.individualTotal.toLocaleString('en-IN') : 0}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-slate-300 font-bold uppercase">AI Bundle Price:</span>
-                      <span className="font-anton text-3xl sm:text-4xl text-[#00BFA5] tracking-tight">
-                        ₹{bundle.bundleTotal ? bundle.bundleTotal.toLocaleString('en-IN') : 0}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleAddBundleToCart(bundle, idx)}
-                    disabled={addedBundles[idx]}
-                    className={`w-full sm:w-auto px-8 py-4 rounded-full font-extrabold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all duration-200 ${
-                      addedBundles[idx]
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-gradient-to-r from-[#00BFA5] to-[#0D9488] hover:from-[#00A892] text-white shadow-[#00BFA5]/30 hover:scale-[1.02]'
-                    }`}
-                  >
-                    {addedBundles[idx] ? (
-                      <>
-                        <Check className="w-5 h-5" />
-                        <span>ADDED TO CART</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-5 h-5 text-amber-300" />
-                        <span>ADD BUNDLE TO CART</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-              </div>
+            {displayedBundles.map((bundle, idx) => (
+              <AmazonBundleSection
+                key={bundle.bundleId || idx}
+                bundle={bundle}
+                bundleIndex={idx}
+                onAddToCart={onAddToCart}
+                onViewDetails={onViewDetails}
+              />
             ))}
           </div>
         )}
 
       </div>
+
     </div>
   );
 }

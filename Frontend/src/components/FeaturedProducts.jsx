@@ -1,10 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Heart, ArrowRight, ChevronRight, Plus, Check } from 'lucide-react';
-import { FEATURED_PRODUCTS as FALLBACK_PRODUCTS } from '../data/products';
+import { Star, Filter, ArrowUpDown, ChevronDown, Sparkles } from 'lucide-react';
+import { FEATURED_PRODUCTS as FALLBACK_PRODUCTS, CATEGORIES } from '../data/products';
+import ProductCard from './ProductCard';
 
-export default function FeaturedProducts({ wishlist, toggleWishlist, onAddToCart }) {
+export default function FeaturedProducts({
+  wishlist = [],
+  toggleWishlist,
+  onAddToCart,
+  onViewDetails,
+  selectedCategory = 'all',
+  onSelectCategory,
+  searchQuery = ''
+}) {
   const [products, setProducts] = useState(FALLBACK_PRODUCTS);
-  const [addedItems, setAddedItems] = useState({});
+  const [activeCategory, setActiveCategory] = useState(selectedCategory || 'all');
+  const [sortBy, setSortBy] = useState('featured'); // 'featured', 'price-asc', 'price-desc', 'rating'
+
+  // Synchronize category if passed from props
+  useEffect(() => {
+    if (selectedCategory) {
+      setActiveCategory(selectedCategory);
+    }
+  }, [selectedCategory]);
 
   useEffect(() => {
     // Fetch live products from backend MongoDB API
@@ -17,16 +34,25 @@ export default function FeaturedProducts({ wishlist, toggleWishlist, onAddToCart
         else if (data && Array.isArray(data.data)) liveProducts = data.data;
 
         if (liveProducts.length > 0) {
-          const formatted = liveProducts.slice(0, 8).map((p, idx) => ({
-            id: p._id || p.id || `prod-${idx}`,
-            name: p.productName || p.name,
-            brand: p.brandName || p.brand || 'BRAND',
-            category: p.category || 'Tech',
-            price: p.price || 9999,
-            oldPrice: Math.round((p.price || 9999) * 1.25),
-            discount: p.discount || 15,
-            image: FALLBACK_PRODUCTS[idx % FALLBACK_PRODUCTS.length].image
-          }));
+          const formatted = liveProducts.map((p, idx) => {
+            const fallbackMatch = FALLBACK_PRODUCTS[idx % FALLBACK_PRODUCTS.length];
+            return {
+              id: p._id || p.id || `prod-${idx}`,
+              name: p.productName || p.name || fallbackMatch.name,
+              brand: p.brandName || p.brand || fallbackMatch.brand,
+              category: p.category || fallbackMatch.category || 'Tech',
+              price: p.price || fallbackMatch.price,
+              oldPrice: Math.round((p.price || fallbackMatch.price) * (1 + ((p.discount || 15) / 100))),
+              discount: p.discount || 15,
+              rating: fallbackMatch.rating || 4.8,
+              reviewsCount: fallbackMatch.reviewsCount || 850,
+              badge: fallbackMatch.badge || "Amazon's Choice",
+              image: fallbackMatch.image,
+              description: fallbackMatch.description,
+              specs: fallbackMatch.specs,
+              deliveryDate: "Tomorrow, 2 PM"
+            };
+          });
           setProducts(formatted);
         }
       })
@@ -35,119 +61,121 @@ export default function FeaturedProducts({ wishlist, toggleWishlist, onAddToCart
       });
   }, []);
 
-  const handleAddToCart = (product) => {
-    onAddToCart(product);
-    setAddedItems((prev) => ({ ...prev, [product.id]: true }));
-    setTimeout(() => {
-      setAddedItems((prev) => ({ ...prev, [product.id]: false }));
-    }, 1500);
-  };
+  // Filter & Sort Logic
+  const filteredProducts = products.filter((p) => {
+    // Category match
+    const categoryMatch =
+      activeCategory === 'all' ||
+      p.category?.toLowerCase() === activeCategory.toLowerCase() ||
+      (activeCategory === 'Smartphones' && (p.category === 'Mobile Phones' || p.category === 'Smartphones')) ||
+      (activeCategory === 'Laptops' && (p.category === 'Laptops & PCs' || p.category === 'Laptops'));
+
+    // Search query match
+    const searchMatch = !searchQuery ||
+      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return categoryMatch && searchMatch;
+  });
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'price-asc') return a.price - b.price;
+    if (sortBy === 'price-desc') return b.price - a.price;
+    if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+    return 0; // 'featured' keeps original order
+  });
 
   return (
     <section id="products" className="py-10 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
       
-      {/* SECTION HEADER */}
-      <div className="flex items-center justify-between mb-8">
+      {/* SECTION HEADER: Title, Category Pills & Sort Dropdown */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#00BFA5]/15 flex items-center justify-center text-[#00BFA5]">
-            <Star className="w-5 h-5 fill-[#00BFA5]" />
+        <div>
+          <div className="flex items-center gap-2 text-xs font-extrabold text-teal-700 tracking-wider uppercase mb-1">
+            <Sparkles className="w-3.5 h-3.5" /> Handpicked Quality Hardware
           </div>
-          <h2 className="font-anton text-3xl sm:text-4xl text-[#0F172A] uppercase tracking-wide">
-            TOP FEATURED PRODUCTS
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Best Sellers & Featured Electronics
           </h2>
         </div>
 
-        <div className="flex items-center gap-3">
-          <a 
-            href="#all-products" 
-            className="text-xs sm:text-sm font-bold text-[#0D9488] hover:text-[#064E3B] flex items-center gap-1 uppercase tracking-wider transition-colors"
+        {/* Sort selector */}
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
+            <ArrowUpDown className="w-3.5 h-3.5" /> Sort by:
+          </span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-2xs"
           >
-            VIEW ALL ({products.length}) <ArrowRight className="w-4 h-4" />
-          </a>
+            <option value="featured">Featured Deals</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Highest Customer Rating</option>
+          </select>
         </div>
+
       </div>
 
-      {/* PRODUCT CARDS GRID */}
-      <div className="relative">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => {
+      {/* CATEGORY TABS PILL BAR */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
+        {CATEGORIES.map((cat) => {
+          const isActive = activeCategory.toLowerCase() === cat.id.toLowerCase();
+          return (
+            <button
+              key={cat.id}
+              onClick={() => {
+                setActiveCategory(cat.id);
+                if (onSelectCategory) onSelectCategory(cat.id);
+              }}
+              className={`text-xs px-4 py-2 rounded-full font-bold whitespace-nowrap transition-all duration-200 ${
+                isActive
+                  ? 'bg-slate-900 text-white shadow-sm ring-2 ring-slate-900/20'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+              }`}
+            >
+              {cat.name}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* PRODUCT GRID */}
+      {sortedProducts.length === 0 ? (
+        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+          <p className="text-base font-bold text-slate-700">No products found matching your filter.</p>
+          <p className="text-xs text-slate-400 mt-1">Try resetting the category or search query.</p>
+          <button
+            onClick={() => {
+              setActiveCategory('all');
+              if (onSelectCategory) onSelectCategory('all');
+            }}
+            className="mt-4 px-5 py-2 bg-amber-400 text-slate-950 rounded-full text-xs font-bold uppercase tracking-wider"
+          >
+            Show All Products
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {sortedProducts.map((product) => {
             const isWishlisted = wishlist.some((item) => item.id === product.id);
-            const isAdded = addedItems[product.id];
-
             return (
-              <div
+              <ProductCard
                 key={product.id}
-                className="bg-white rounded-[24px] p-5 shadow-card hover:shadow-xl hover:shadow-slate-200/80 border border-slate-100 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 relative group/card"
-              >
-                
-                {/* TOP IMAGE & BADGES AREA */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="bg-[#00BFA5] text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">
-                      -{product.discount}%
-                    </span>
-
-                    <button
-                      onClick={() => toggleWishlist(product)}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
-                        isWishlisted
-                          ? 'bg-rose-50 text-rose-500 shadow-sm'
-                          : 'bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50'
-                      }`}
-                      title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                    >
-                      <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-rose-500' : ''}`} />
-                    </button>
-                  </div>
-
-                  <div className="w-full h-44 sm:h-48 rounded-2xl bg-slate-50 mb-4 overflow-hidden flex items-center justify-center p-3 relative">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="max-h-full max-w-full object-contain group-hover/card:scale-105 transition-transform duration-500 mix-blend-multiply"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[11px] font-extrabold text-[#0D9488] tracking-widest uppercase block">
-                      {product.brand}
-                    </span>
-                    <h3 className="font-bold text-slate-800 text-base sm:text-lg line-clamp-1 group-hover/card:text-[#00BFA5] transition-colors">
-                      {product.name}
-                    </h3>
-                  </div>
-                </div>
-
-                {/* BOTTOM PRICE & ACTION AREA */}
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div>
-                    <div className="text-lg sm:text-xl font-extrabold text-[#0F172A] tracking-tight">
-                      ₹{product.price ? product.price.toLocaleString('en-IN') : 0}
-                    </div>
-                    <div className="text-xs font-semibold text-slate-400 line-through">
-                      ₹{product.oldPrice ? product.oldPrice.toLocaleString('en-IN') : 0}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    className={`p-2.5 rounded-full transition-all duration-200 flex items-center gap-1 font-bold text-xs ${
-                      isAdded
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-slate-100 hover:bg-[#00BFA5] text-slate-700 hover:text-white'
-                    }`}
-                    title="Add to Bundle"
-                  >
-                    {isAdded ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                  </button>
-                </div>
-
-              </div>
+                product={product}
+                isWishlisted={isWishlisted}
+                onToggleWishlist={toggleWishlist}
+                onAddToCart={onAddToCart}
+                onViewDetails={onViewDetails}
+              />
             );
           })}
         </div>
-      </div>
+      )}
+
     </section>
   );
 }
