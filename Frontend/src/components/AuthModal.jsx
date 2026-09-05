@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Mail, Lock, Eye, EyeOff, ShieldCheck, ShoppingBag, ArrowLeft, RefreshCw, CheckCircle2, AlertCircle, User, KeyRound } from 'lucide-react';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+import { authApi } from '../services/api';
 
 function maskEmail(emailStr) {
   if (!emailStr || !emailStr.includes('@')) return emailStr;
@@ -17,12 +16,14 @@ export default function AuthModal({
   onClose,
   currentUser,
   onAuthSuccess,
-  onSignOut
+  onSignOut,
+  initialTab = 'signin',
+  onTabChange
 }) {
   // Navigation State:
   // activeTab: 'signin' | 'signup'
   // step: 'form' | 'forgot-email' | 'otp' | 'reset-password' | 'reset-success'
-  const [activeTab, setActiveTab] = useState('signin');
+  const [activeTab, setActiveTab] = useState(initialTab || 'signin');
   const [step, setStep] = useState('form');
   const [otpPurpose, setOtpPurpose] = useState('signin'); // 'signin' | 'signup' | 'password_reset'
 
@@ -51,6 +52,13 @@ export default function AuthModal({
   // 6 Segmented Input Refs
   const inputRefs = useRef([]);
 
+  // Sync initialTab if changed
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
   // Reset modal state upon opening
   useEffect(() => {
     if (isOpen) {
@@ -62,9 +70,10 @@ export default function AuthModal({
         setNewPassword('');
         setConfirmPassword('');
         setResetToken('');
+        if (initialTab) setActiveTab(initialTab);
       }
     }
-  }, [isOpen, currentUser]);
+  }, [isOpen, currentUser, initialTab]);
 
   // Countdown timer for 30s resend cooldown
   useEffect(() => {
@@ -170,16 +179,9 @@ export default function AuthModal({
     setLoading(true);
 
     try {
-      const endpoint = activeTab === 'signin' ? `${API_BASE_URL}/login` : `${API_BASE_URL}/register`;
-      const payload = activeTab === 'signin'
-        ? { email: normalizedEmail, password }
-        : { userName: name.trim(), email: normalizedEmail, password };
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const res = activeTab === 'signin'
+        ? await authApi.login(normalizedEmail, password)
+        : await authApi.register(name.trim(), normalizedEmail, password);
 
       const data = await res.json().catch(() => ({}));
 
@@ -245,12 +247,7 @@ export default function AuthModal({
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalizedEmail })
-      });
-
+      const res = await authApi.forgotPassword(normalizedEmail);
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -286,12 +283,7 @@ export default function AuthModal({
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/resend-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), type: otpPurpose })
-      });
-
+      const res = await authApi.resendOtp(email.trim(), otpPurpose);
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -384,15 +376,7 @@ export default function AuthModal({
     try {
       // If password reset, call /api/verify-reset-otp to receive server resetToken
       if (otpPurpose === 'password_reset') {
-        const res = await fetch(`${API_BASE_URL}/verify-reset-otp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: email.trim(),
-            otp: fullOtp
-          })
-        });
-
+        const res = await authApi.verifyResetOtp(email.trim(), fullOtp);
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
@@ -419,15 +403,7 @@ export default function AuthModal({
       }
 
       // Normal Sign In / Sign Up OTP verification
-      const res = await fetch(`${API_BASE_URL}/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          otp: fullOtp
-        })
-      });
-
+      const res = await authApi.verifyOtp(email.trim(), fullOtp);
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -484,17 +460,7 @@ export default function AuthModal({
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          resetToken,
-          newPassword,
-          confirmPassword
-        })
-      });
-
+      const res = await authApi.resetPassword(email.trim(), resetToken, newPassword, confirmPassword);
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -814,6 +780,7 @@ export default function AuthModal({
                     id="auth-switch-to-signup"
                     onClick={() => {
                       setActiveTab('signup');
+                      if (onTabChange) onTabChange('signup');
                       setErrorMessage('');
                       setStatusMessage('');
                     }}
@@ -834,6 +801,7 @@ export default function AuthModal({
                     id="auth-switch-to-signin"
                     onClick={() => {
                       setActiveTab('signin');
+                      if (onTabChange) onTabChange('signin');
                       setErrorMessage('');
                       setStatusMessage('');
                     }}

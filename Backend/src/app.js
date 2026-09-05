@@ -7,6 +7,7 @@ const app = express();
 const productRoutes = require('./routes/product.route');
 const aiRoutes = require('./routes/ai.route');
 const userRoutes = require('./routes/user.route');
+const paymentRoutes = require('./routes/payment.route');
 
 // Production-ready CORS configuration for local dev and Vercel domains
 const allowedOrigins = [
@@ -46,8 +47,10 @@ app.use(async (req, res, next) => {
     }
 });
 
+
 app.use("/api/products", productRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api", userRoutes);
+app.use("/api", paymentRoutes);
 
 module.exports = app;

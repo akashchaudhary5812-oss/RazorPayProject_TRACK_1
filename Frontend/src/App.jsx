@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroBanner from './components/HeroBanner';
 import LightningDeals from './components/LightningDeals';
@@ -15,15 +16,37 @@ import CategoryDrawer from './components/CategoryDrawer';
 import CartPage from './components/CartPage';
 import CheckoutModal from './components/CheckoutModal';
 import AuthModal from './components/AuthModal';
+import PaymentSuccess from './components/PaymentSuccess';
 import { FEATURED_PRODUCTS } from './data/products';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('home'); // 'home', 'cart', 'bundles'
-  const [activeRequirementId, setActiveRequirementId] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // URL-driven states
+  const pathname = location.pathname;
+  const isRegisterRoute = pathname === '/register' || pathname === '/signup' || pathname === '/api/register';
+  const isLoginRoute = pathname === '/login' || pathname === '/signin' || pathname === '/api/login';
+  const isAuthRoute = isRegisterRoute || isLoginRoute;
+
+  const isCartRoute = pathname === '/cart';
+  const isBundlesRoute = pathname.startsWith('/bundles');
+  const bundlesParamId = isBundlesRoute ? pathname.replace('/bundles/', '').replace('/bundles', '') : null;
+
+  const referenceParam = searchParams.get('reference');
+  const isPaymentSuccessRoute = pathname === '/paymentsuccess' || !!referenceParam;
+
+  const [activeRequirementId, setActiveRequirementId] = useState(bundlesParamId || null);
 
   // Cart & Wishlist State
   const [cart, setCart] = useState(() => {
     try {
+      if (isPaymentSuccessRoute) {
+        localStorage.removeItem('intentcartai_cart');
+        localStorage.removeItem('bundleai_cart');
+        return [];
+      }
       const saved = localStorage.getItem('intentcartai_cart') || localStorage.getItem('bundleai_cart');
       return saved ? JSON.parse(saved) : [];
     } catch {
@@ -58,9 +81,17 @@ export default function App() {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerType, setDrawerType] = useState('cart'); // 'cart' or 'wishlist'
+
+  // Clear cart on payment success
+  useEffect(() => {
+    if (isPaymentSuccessRoute) {
+      setCart([]);
+      localStorage.removeItem('intentcartai_cart');
+      localStorage.removeItem('bundleai_cart');
+    }
+  }, [isPaymentSuccessRoute]);
 
   // Persist Cart & Wishlist & User in localStorage
   useEffect(() => {
@@ -160,8 +191,8 @@ export default function App() {
   // Open /bundles page view
   const handleOpenBundlesPage = (requirementId) => {
     setActiveRequirementId(requirementId || null);
-    setCurrentView('bundles');
     setAiModalOpen(false);
+    navigate(requirementId ? `/bundles/${requirementId}` : '/bundles');
   };
 
   // Search Submission from Navbar
@@ -170,10 +201,9 @@ export default function App() {
     if (category && category !== 'all') {
       setSelectedCategory(category);
     }
-    if (currentView !== 'home') {
-      setCurrentView('home');
+    if (pathname !== '/') {
+      navigate('/');
     }
-    // Smooth scroll to products
     const elem = document.getElementById('products');
     if (elem) {
       elem.scrollIntoView({ behavior: 'smooth' });
@@ -190,12 +220,12 @@ export default function App() {
   );
 
   // If in bundles page view
-  if (currentView === 'bundles') {
+  if (isBundlesRoute) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between">
         <BundlesPage
-          requirementId={activeRequirementId}
-          onBackToHome={() => setCurrentView('home')}
+          requirementId={bundlesParamId || activeRequirementId}
+          onBackToHome={() => navigate('/')}
           onAddToCart={handleAddToCart}
           onViewDetails={handleViewDetails}
         />
@@ -224,31 +254,37 @@ export default function App() {
           cartCount={totalCartItemCount}
           wishlistCount={wishlist.length}
           cartTotal={cartTotalAmount}
-          onOpenCart={() => setCurrentView('cart')}
+          onOpenCart={() => navigate('/cart')}
           onOpenWishlist={() => {
             setDrawerType('wishlist');
             setDrawerOpen(true);
           }}
-          onOpenProfile={() => setAuthModalOpen(true)}
+          onOpenProfile={() => navigate('/signin')}
           onOpenCategoryDrawer={() => setCategoryDrawerOpen(true)}
           onTriggerAISearch={handleTriggerAISearch}
           onSearchSubmit={handleSearchSubmit}
           onSelectCategory={(cat) => {
             setSelectedCategory(cat);
-            if (currentView !== 'home') setCurrentView('home');
+            if (pathname !== '/') navigate('/');
             const elem = document.getElementById('products');
             if (elem) elem.scrollIntoView({ behavior: 'smooth' });
           }}
           onOpenDeals={() => {
-            if (currentView !== 'home') setCurrentView('home');
+            if (pathname !== '/') navigate('/');
             const elem = document.getElementById('deals');
             if (elem) elem.scrollIntoView({ behavior: 'smooth' });
           }}
           currentUser={currentUser}
         />
 
-        {/* VIEW CONDITIONAL RENDERING */}
-        {currentView === 'cart' ? (
+        {/* VIEW CONDITIONAL ROUTE RENDERING */}
+        {isPaymentSuccessRoute ? (
+          /* Razorpay Payment Success Screen */
+          <PaymentSuccess
+            reference={referenceParam}
+            onBackToShopping={() => navigate('/')}
+          />
+        ) : isCartRoute ? (
           /* Full 2-Column Amazon Cart Page */
           <CartPage
             cartItems={cart}
@@ -256,7 +292,7 @@ export default function App() {
             onRemoveItem={handleRemoveFromCart}
             onSaveForLater={handleSaveForLater}
             onProceedToCheckout={() => setCheckoutModalOpen(true)}
-            onBackToShopping={() => setCurrentView('home')}
+            onBackToShopping={() => navigate('/')}
           />
         ) : (
           /* Homepage E-Commerce Layout */
@@ -331,16 +367,16 @@ export default function App() {
         isOpen={categoryDrawerOpen}
         onClose={() => setCategoryDrawerOpen(false)}
         currentUser={currentUser}
-        onOpenAuth={() => setAuthModalOpen(true)}
+        onOpenAuth={() => navigate('/signin')}
         onSelectCategory={(cat) => {
           setSelectedCategory(cat);
-          if (currentView !== 'home') setCurrentView('home');
+          if (pathname !== '/') navigate('/');
           const elem = document.getElementById('products');
           if (elem) elem.scrollIntoView({ behavior: 'smooth' });
         }}
         onTriggerAISearch={handleTriggerAISearch}
         onOpenDeals={() => {
-          if (currentView !== 'home') setCurrentView('home');
+          if (pathname !== '/') navigate('/');
           const elem = document.getElementById('deals');
           if (elem) elem.scrollIntoView({ behavior: 'smooth' });
         }}
@@ -351,6 +387,7 @@ export default function App() {
         isOpen={checkoutModalOpen}
         onClose={() => setCheckoutModalOpen(false)}
         cartItems={cart}
+        currentUser={currentUser}
         onOrderSuccess={() => {
           setCart([]);
           localStorage.removeItem('intentcartai_cart');
@@ -358,13 +395,23 @@ export default function App() {
         }}
       />
 
-      {/* Auth Modal (Sign In / Register) */}
+      {/* Auth Modal with React Router URL Sync (e.g. /signin or /register) */}
       <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        isOpen={isAuthRoute}
+        initialTab={isRegisterRoute ? 'signup' : 'signin'}
+        onTabChange={(tab) => {
+          navigate(tab === 'signup' ? '/register' : '/signin', { replace: true });
+        }}
+        onClose={() => navigate('/')}
         currentUser={currentUser}
-        onAuthSuccess={(user) => setCurrentUser(user)}
-        onSignOut={() => setCurrentUser(null)}
+        onAuthSuccess={(user) => {
+          setCurrentUser(user);
+          navigate('/');
+        }}
+        onSignOut={() => {
+          setCurrentUser(null);
+          navigate('/');
+        }}
       />
 
       {/* Cart & Wishlist Quick Drawer */}

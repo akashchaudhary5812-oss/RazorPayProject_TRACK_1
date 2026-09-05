@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, SlidersHorizontal, ArrowUpDown, Package, RefreshCw, AlertCircle } from 'lucide-react';
 import AmazonBundleSection from './AmazonBundleSection';
 import BundleSkeletonGrid from './BundleSkeletonGrid';
+import { aiApi } from '../services/api';
 
 export default function BundlesPage({ requirementId, onBackToHome, onAddToCart, onViewDetails }) {
   const [loading, setLoading] = useState(true);
@@ -20,13 +21,12 @@ export default function BundlesPage({ requirementId, onBackToHome, onAddToCart, 
   const fetchBundles = async () => {
     setLoading(true);
     setError('');
-    
-    const endpoint = requirementId
-      ? `http://localhost:3000/api/ai/bundles/${requirementId}`
-      : `http://localhost:3000/api/ai/bundles`;
 
     try {
-      const res = await fetch(endpoint);
+      const res = requirementId
+        ? await aiApi.getBundlesById(requirementId)
+        : await aiApi.getLatestBundles();
+
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to load bundles`);
       
       const data = await res.json();

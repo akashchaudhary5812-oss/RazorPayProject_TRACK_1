@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, ShoppingBag, ArrowRight, RefreshCw, AlertCircle, Package, Mic, MicOff, Volume2 } from 'lucide-react';
 import AmazonBundleSection from './AmazonBundleSection';
 import BundleSkeletonGrid from './BundleSkeletonGrid';
-
-const API_BASE_URL = 'http://localhost:3000/api/ai';
+import { aiApi } from '../services/api';
 
 export default function AISearchModal({
   isOpen,
@@ -178,24 +177,15 @@ export default function AISearchModal({
     };
 
     try {
-      // Step 1: Submit requirements
-      const reqRes = await fetch(`${API_BASE_URL}/userRequirements`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
+      // Step 1: Submit requirements to backend
+      const reqRes = await aiApi.submitRequirements(payload);
       if (!reqRes.ok) throw new Error(`Requirements service returned ${reqRes.status}`);
       const reqData = await reqRes.json();
       const requirementId = reqData.requirementId;
       setLastRequirementId(requirementId);
 
-      // Step 2: Fetch bundles
-      const searchRes = await fetch(`${API_BASE_URL}/aiEfficientSearch/${requirementId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
+      // Step 2: Fetch Mistral AI generated bundles
+      const searchRes = await aiApi.getAiBundles(requirementId);
       if (!searchRes.ok) throw new Error(`Bundle service returned ${searchRes.status}`);
       const searchData = await searchRes.json();
 

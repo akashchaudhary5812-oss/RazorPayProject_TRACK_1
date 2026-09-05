@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ShoppingCart, Check, ShieldCheck } from 'lucide-react';
+import { ShoppingCart, Check, ShieldCheck, Sparkles, Bot } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import AmazonProductCard from './AmazonProductCard';
 import { FEATURED_PRODUCTS } from '../data/products';
@@ -89,7 +89,6 @@ export default function AmazonBundleSection({
 
   // Compute live bundle total based on selected items & their quantities
   const dynamicTotal = useMemo(() => {
-    // If backend provided a bundleTotal and all original products are selected with qty=1
     const allSelectedAtQtyOne =
       selectedIds.size === enrichedProducts.length &&
       Object.values(quantities).every((q) => q === 1);
@@ -98,26 +97,29 @@ export default function AmazonBundleSection({
       return bundle.bundleTotal;
     }
 
-    return selectedProducts.reduce((sum, p) => {
+    return selectedProducts.reduce((acc, p) => {
       const qty = quantities[p.id] || 1;
-      return sum + ((p.price || 0) * qty);
+      const effectivePrice = p.price != null ? p.price : 999;
+      const discount = p.discount || 0;
+      const discountedItemPrice = Math.round(effectivePrice * (1 - discount / 100));
+      return acc + discountedItemPrice * qty;
     }, 0);
-  }, [selectedProducts, selectedIds, enrichedProducts, quantities, bundle?.bundleTotal]);
+  }, [selectedProducts, quantities, bundle, selectedIds, enrichedProducts]);
 
   // Original total without bundle discount
   const dynamicOriginalTotal = useMemo(() => {
-    if (bundle?.individualTotal != null && selectedIds.size === enrichedProducts.length) {
-      return bundle.individualTotal;
-    }
-    return selectedProducts.reduce((sum, p) => {
+    return selectedProducts.reduce((acc, p) => {
       const qty = quantities[p.id] || 1;
-      const basePrice = p.oldPrice || (p.price ? Math.round(p.price * 1.2) : 0);
-      return sum + (basePrice * qty);
+      const effectivePrice = p.oldPrice || (p.price != null ? Math.round(p.price * 1.15) : 1299);
+      return acc + effectivePrice * qty;
     }, 0);
-  }, [selectedProducts, selectedIds, enrichedProducts, quantities, bundle?.individualTotal]);
+  }, [selectedProducts, quantities]);
 
-  const dynamicSavings = dynamicOriginalTotal > dynamicTotal ? dynamicOriginalTotal - dynamicTotal : 0;
-  const dynamicSavingsPercent = dynamicOriginalTotal > 0 ? Math.round((dynamicSavings / dynamicOriginalTotal) * 100) : 0;
+  const dynamicSavings = Math.max(0, dynamicOriginalTotal - dynamicTotal);
+  const dynamicSavingsPercent =
+    dynamicOriginalTotal > 0
+      ? Math.round((dynamicSavings / dynamicOriginalTotal) * 100)
+      : bundle?.savingsPercentage || 15;
 
   // Add All to Cart handler
   const handleAddAllToCart = () => {
@@ -149,8 +151,8 @@ export default function AmazonBundleSection({
     return null;
   }
 
-  const bundleTitle = bundle.name || "Recommended Bundle";
-  const bundleDescription = bundle.reason || "Carefully selected products tailored for compatibility, performance, and maximum bundle savings.";
+  const bundleTitle = bundle.name || "Mistral AI Recommended Bundle";
+  const bundleDescription = bundle.reason || "Curated by Mistral AI based on your exact requirements and algorithm.";
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden mb-8 transition-shadow hover:shadow-md">
@@ -161,8 +163,8 @@ export default function AmazonBundleSection({
           
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="bg-amber-400 text-slate-950 font-black text-[10px] uppercase px-2.5 py-0.5 rounded tracking-wider shadow-2xs">
-                {bundleTitle}
+              <span className="bg-amber-400 text-slate-950 font-black text-[10px] uppercase px-2.5 py-0.5 rounded tracking-wider shadow-2xs flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-amber-950" /> Mistral AI Curated
               </span>
               <span className="text-slate-300 text-xs font-semibold">
                 {enrichedProducts.length} Products in Package

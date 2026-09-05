@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Star, Filter, ArrowUpDown, ChevronDown, Sparkles, SlidersHorizontal, PackageSearch, Layers } from 'lucide-react';
 import { FEATURED_PRODUCTS as FALLBACK_PRODUCTS, CATEGORIES, SUBCATEGORIES_BY_CATEGORY } from '../data/products';
 import ProductCard from './ProductCard';
+import { productApi } from '../services/api';
 
 export default function FeaturedProducts({
   wishlist = [],
@@ -33,8 +34,8 @@ export default function FeaturedProducts({
   }, [searchQuery, activeSubcategory]);
 
   useEffect(() => {
-    // Fetch live products from backend MongoDB API if available
-    fetch('http://localhost:3000/api/products/products')
+    // Fetch live products from backend MongoDB API
+    productApi.getAllProducts()
       .then((res) => res.json())
       .then((data) => {
         let liveProducts = [];
