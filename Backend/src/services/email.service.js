@@ -1,8 +1,130 @@
-if (!process.env.SMTP_HOST) {
+if (!process.env.SMTP_HOST && !process.env.GMAIL_CLIENT_ID) {
     require('dotenv').config();
 }
 
 const nodemailer = require('nodemailer');
+
+// ─── Google Gmail REST API (OAuth2) Configuration ──────────────────────────────
+// Uses HTTPS (Port 443) - Never blocked by Render, Vercel, or cloud firewalls.
+
+let cachedGoogleAccessToken = null;
+let googleTokenExpiresAt = 0;
+
+function checkGmailApiConfigured() {
+    return Boolean(
+        process.env.GMAIL_CLIENT_ID &&
+        process.env.GMAIL_CLIENT_SECRET &&
+        process.env.GMAIL_REFRESH_TOKEN
+    );
+}
+
+/**
+ * Automatically refreshes and caches Google OAuth2 access token.
+ */
+async function getGoogleAccessToken() {
+    if (cachedGoogleAccessToken && Date.now() < googleTokenExpiresAt - 60000) {
+        return cachedGoogleAccessToken;
+    }
+
+    const clientId = process.env.GMAIL_CLIENT_ID?.trim();
+    const clientSecret = process.env.GMAIL_CLIENT_SECRET?.trim();
+    const refreshToken = process.env.GMAIL_REFRESH_TOKEN?.trim();
+
+    if (!clientId || !clientSecret || !refreshToken) {
+        throw new Error('Google Gmail OAuth credentials not fully configured.');
+    }
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            refresh_token: refreshToken,
+            grant_type: 'refresh_token'
+        })
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.access_token) {
+        throw new Error(`Google token refresh failed: ${data.error_description || data.error || 'Unknown error'}`);
+    }
+
+    cachedGoogleAccessToken = data.access_token;
+    googleTokenExpiresAt = Date.now() + (data.expires_in * 1000);
+    return cachedGoogleAccessToken;
+}
+
+/**
+ * Builds an RFC 2822 multipart email message and encodes it for the Gmail REST API.
+ */
+function createRawEmail({ to, from, subject, textContent, htmlContent }) {
+    const boundary = `__boundary_${Date.now()}__`;
+    const encodedSubject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+
+    const lines = [
+        `From: ${from}`,
+        `To: ${to}`,
+        `Subject: ${encodedSubject}`,
+        'MIME-Version: 1.0',
+        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+        '',
+        `--${boundary}`,
+        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: 7bit',
+        '',
+        textContent,
+        '',
+        `--${boundary}`,
+        'Content-Type: text/html; charset=UTF-8',
+        'Content-Transfer-Encoding: 7bit',
+        '',
+        htmlContent,
+        '',
+        `--${boundary}--`
+    ];
+
+    return Buffer.from(lines.join('\r\n'))
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+/**
+ * Sends an email using the official Google Gmail REST API over HTTPS (port 443).
+ */
+async function sendViaGmailApi(toEmail, subject, textContent, htmlContent) {
+    const accessToken = await getGoogleAccessToken();
+    const gmailUser = process.env.GMAIL_USER ? process.env.GMAIL_USER.trim() : 'abhishekyadav44998@gmail.com';
+    const fromAddress = `"IntentCartAI" <${gmailUser}>`;
+
+    const raw = createRawEmail({
+        to: toEmail,
+        from: fromAddress,
+        subject,
+        textContent,
+        htmlContent
+    });
+
+    const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ raw })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(`Gmail API error: ${data.error?.message || 'Failed to dispatch email'}`);
+    }
+
+    return { success: true, messageId: data.id };
+}
+
+// ─── Nodemailer SMTP Fallback Configuration ─────────────────────────────────────
 
 function checkSmtpConfigured() {
     return Boolean(
@@ -11,8 +133,6 @@ function checkSmtpConfigured() {
         process.env.SMTP_PASS
     );
 }
-
-console.log('SMTP configuration detected:', checkSmtpConfigured());
 
 let cachedTransporter = null;
 
@@ -39,10 +159,6 @@ function createTransporter() {
     });
 }
 
-/**
- * Gets or creates the active Nodemailer SMTP transporter.
- * Fails cleanly if SMTP credentials are not configured (never silently falls back to mock inboxes).
- */
 async function getTransporter() {
     if (cachedTransporter) {
         return cachedTransporter;
@@ -56,10 +172,6 @@ async function getTransporter() {
     return cachedTransporter;
 }
 
-/**
- * Tests the SMTP handshake and connection.
- * @returns {Promise<{success: boolean, error?: string}>}
- */
 async function verifySmtpConnection() {
     const transporter = await getTransporter();
     if (!transporter) {
@@ -79,24 +191,12 @@ async function verifySmtpConnection() {
     }
 }
 
-// Perform safe startup verification
-if (checkSmtpConfigured()) {
-    getTransporter().then((t) => {
-        if (t) {
-            t.verify((err) => {
-                if (err) {
-                    console.error('SMTP connection error:', err.message);
-                } else {
-                    console.log('SMTP connection: successful');
-                }
-            });
-        }
-    });
-}
+// ─── Universal sendOtpEmail Dispatcher ──────────────────────────────────────────
 
 /**
- * Sends a 6-digit OTP verification email via Nodemailer SMTP.
- * Sends both plaintext and HTML to guarantee delivery and avoid anti-spam penalties.
+ * Sends a 6-digit OTP verification email.
+ * Prioritizes Google Gmail REST API (HTTPS port 443, never blocked).
+ * Falls back cleanly to Nodemailer SMTP.
  * 
  * @param {string} toEmail Recipient email address
  * @param {string} otp 6-digit verification code
@@ -104,32 +204,7 @@ if (checkSmtpConfigured()) {
  * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
  */
 async function sendOtpEmail(toEmail, otp, purpose = 'signin') {
-    console.log('OTP email request received');
-
-    const activeTransporter = await getTransporter();
-
-    if (!activeTransporter) {
-        console.error('[SMTP Error]: SMTP credentials are not configured on the server.');
-        return {
-            success: false,
-            error: 'SMTP credentials are not configured on the server.'
-        };
-    }
-
-    // Determine clean From address with display name matching the authenticated user
-    const smtpUser = process.env.SMTP_USER ? process.env.SMTP_USER.trim() : '';
-    const configuredFrom = process.env.SMTP_FROM ? process.env.SMTP_FROM.trim() : '';
-
-    let fromAddress;
-    if (configuredFrom && configuredFrom.includes('<') && configuredFrom.includes('>')) {
-        fromAddress = configuredFrom;
-    } else if (configuredFrom && configuredFrom.includes('@')) {
-        fromAddress = `"BundleAI" <${configuredFrom}>`;
-    } else if (smtpUser) {
-        fromAddress = `"BundleAI" <${smtpUser}>`;
-    } else {
-        fromAddress = 'BundleAI <no-reply@bundleai.com>';
-    }
+    console.log(`[OTP] Request received to dispatch code for: ${toEmail} (Purpose: ${purpose})`);
 
     const isPasswordReset = purpose === 'password_reset';
     const emailSubject = isPasswordReset ? 'Reset your password' : 'Your verification code';
@@ -158,32 +233,72 @@ async function sendOtpEmail(toEmail, otp, purpose = 'signin') {
         </div>
     `;
 
-    try {
-        console.log(`[OTP] Sending verification email via Nodemailer SMTP to: ${toEmail} (Purpose: ${purpose})`);
-
-        const info = await activeTransporter.sendMail({
-            from: fromAddress,
-            to: toEmail,
-            subject: emailSubject,
-            text: textContent,
-            html: htmlContent
-        });
-
-        console.log(`[SMTP Success] OTP email sent to: ${toEmail} (Message ID: ${info.messageId})`);
-        return { success: true, messageId: info.messageId };
-
-    } catch (err) {
-        console.error('[SMTP Send Error]:', err.message);
-        return { success: false, error: err.message };
+    // 1. Primary: Google Gmail REST API (Over HTTPS port 443)
+    if (checkGmailApiConfigured()) {
+        try {
+            console.log(`[OTP] Dispatching email via Google Gmail REST API to: ${toEmail}`);
+            const result = await sendViaGmailApi(toEmail, emailSubject, textContent, htmlContent);
+            console.log(`[Gmail API Success] OTP email delivered to: ${toEmail} (Message ID: ${result.messageId})`);
+            return result;
+        } catch (err) {
+            console.error('[Gmail API Error]:', err.message);
+            // Don't return yet, try falling back to SMTP if configured
+        }
     }
+
+    // 2. Secondary / Fallback: Nodemailer SMTP
+    const activeTransporter = await getTransporter();
+    if (activeTransporter) {
+        try {
+            console.log(`[OTP] Dispatching email via Nodemailer SMTP fallback to: ${toEmail}`);
+            const smtpUser = process.env.SMTP_USER ? process.env.SMTP_USER.trim() : '';
+            const configuredFrom = process.env.SMTP_FROM ? process.env.SMTP_FROM.trim() : '';
+
+            let fromAddress;
+            if (configuredFrom && configuredFrom.includes('<') && configuredFrom.includes('>')) {
+                fromAddress = configuredFrom;
+            } else if (configuredFrom && configuredFrom.includes('@')) {
+                fromAddress = `"IntentCartAI" <${configuredFrom}>`;
+            } else if (smtpUser) {
+                fromAddress = `"IntentCartAI" <${smtpUser}>`;
+            } else {
+                fromAddress = 'IntentCartAI <no-reply@intentcart.ai>';
+            }
+
+            const info = await activeTransporter.sendMail({
+                from: fromAddress,
+                to: toEmail,
+                subject: emailSubject,
+                text: textContent,
+                html: htmlContent
+            });
+
+            console.log(`[SMTP Success] OTP email sent to: ${toEmail} (Message ID: ${info.messageId})`);
+            return { success: true, messageId: info.messageId };
+        } catch (err) {
+            console.error('[SMTP Send Error]:', err.message);
+            return { success: false, error: err.message };
+        }
+    }
+
+    console.error('[Email Dispatch Error]: Neither Google Gmail API nor Nodemailer SMTP is configured.');
+    return {
+        success: false,
+        error: 'Email delivery credentials are not configured on the server.'
+    };
 }
+
+console.log('Email delivery engine initialized:');
+console.log(`- Google Gmail REST API configured: ${checkGmailApiConfigured()}`);
+console.log(`- Nodemailer SMTP fallback configured: ${checkSmtpConfigured()}`);
 
 module.exports = {
     sendOtpEmail,
     getTransporter,
     verifySmtpConnection,
     checkSmtpConfigured,
+    checkGmailApiConfigured,
     get isSmtpConfigured() {
-        return checkSmtpConfigured();
+        return checkSmtpConfigured() || checkGmailApiConfigured();
     }
 };
