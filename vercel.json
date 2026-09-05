@@ -7,20 +7,20 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "https://razorpayproject-track-1.onrender.com/api/$1"
+    },
+    {
+      "src": "^/(assets|favicon\\.ico|robots\\.txt)(.*)",
+      "dest": "/Frontend/$1$2"
     },
     {
       "src": "/(.*)",
-      "dest": "/Frontend/$1"
+      "dest": "/Frontend/index.html"
     }
   ]
 }
