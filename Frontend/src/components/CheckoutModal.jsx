@@ -83,7 +83,10 @@ export default function CheckoutModal({
       const validPhone = cleanedDigits.length >= 10 ? cleanedDigits.slice(-10) : '9876543210';
 
       // 4. Construct Razorpay Options
-      const backendVerificationUrl = "http://localhost:3000/api/paymentVerification";
+      const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
+      const backendVerificationUrl = isProduction
+        ? 'https://razorpayproject-track-1.onrender.com/api/paymentVerification'
+        : 'http://localhost:3000/api/paymentVerification';
 
       const options = {
         key: key,

@@ -3,8 +3,14 @@
  * Automatically routes through Vite proxy (/api) and falls back directly to http://localhost:3000/api
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-const DIRECT_BACKEND_URL = 'http://localhost:3000/api';
+const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
+const RENDER_BACKEND_URL = 'https://razorpayproject-track-1.onrender.com/api';
+const LOCAL_BACKEND_URL = 'http://localhost:3000/api';
+
+const DEFAULT_BACKEND_URL = isProduction ? RENDER_BACKEND_URL : LOCAL_BACKEND_URL;
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (isProduction ? RENDER_BACKEND_URL : '/api');
+const DIRECT_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || DEFAULT_BACKEND_URL;
 
 export async function apiRequest(path, options = {}) {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
