@@ -83,10 +83,9 @@ export default function CheckoutModal({
       const validPhone = cleanedDigits.length >= 10 ? cleanedDigits.slice(-10) : '9876543210';
 
       // 4. Construct Razorpay Options
-      const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
-      const backendVerificationUrl = isProduction
-        ? 'https://razorpayproject-track-1.onrender.com/api/paymentVerification'
-        : 'http://localhost:3000/api/paymentVerification';
+      // Determine the success redirect URL dynamically from the actual browser origin.
+      // This ensures it works both in local dev (localhost:5173) and on the live site.
+      const successRedirectUrl = `${window.location.origin}/paymentsuccess`;
 
       const options = {
         key: key,
@@ -96,7 +95,6 @@ export default function CheckoutModal({
         description: `Order for ${totalItemCount} item(s) - ₹${totalAmount.toLocaleString('en-IN')}`,
         image: "https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png",
         order_id: order.id,
-        callback_url: backendVerificationUrl,
         prefill: {
           name: address.fullName || 'Valued Customer',
           email: currentUser?.email || "customer@intentcart.ai",
@@ -114,9 +112,10 @@ export default function CheckoutModal({
           }
         },
         handler: function (response) {
-          // If browser client-side handler triggers instead of form post
+          // Client-side success handler — uses dynamic origin so this works on
+          // localhost, Vercel, or any other deployment without any code change.
           if (response && response.razorpay_payment_id) {
-            window.location.href = `http://localhost:5173/paymentsuccess?reference=${response.razorpay_payment_id}`;
+            window.location.href = `${successRedirectUrl}?reference=${response.razorpay_payment_id}`;
           }
         }
       };

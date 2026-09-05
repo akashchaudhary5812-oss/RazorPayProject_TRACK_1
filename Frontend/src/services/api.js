@@ -1,48 +1,41 @@
 /**
- * Centralized API client for IntentCartAI Frontend
- * Automatically routes through Vite proxy (/api) and falls back directly to http://localhost:3000/api
+ * Centralized API client for IntentCartAI
+ *
+ * How the base URL is resolved (in order of priority):
+ *   1. VITE_API_BASE_URL environment variable (set this in Vercel dashboard for production)
+ *   2. Falls back to '/api' which is proxied to the backend by Vite during local development
+ *
+ * Production setup (Vercel → Environment Variables):
+ *   VITE_API_URL = https://razorpayproject-track-1.onrender.com/api
+ *
+ * Local development:
+ *   Vite proxy in vite.config.js forwards '/api' → 'http://localhost:3000'
+ *   No env variable needed locally.
  */
 
-const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
-const RENDER_BACKEND_URL = 'https://razorpayproject-track-1.onrender.com/api';
-const LOCAL_BACKEND_URL = 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
-const DEFAULT_BACKEND_URL = isProduction ? RENDER_BACKEND_URL : LOCAL_BACKEND_URL;
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (isProduction ? RENDER_BACKEND_URL : '/api');
-const DIRECT_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || DEFAULT_BACKEND_URL;
-
+/**
+ * Generic fetch wrapper — all API calls go through here.
+ * @param {string} path  - e.g. '/login', '/ai/bundles'
+ * @param {RequestInit} options
+ */
 export async function apiRequest(path, options = {}) {
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  const relativeUrl = `${API_BASE_URL}${cleanPath}`;
-  const directUrl = `${DIRECT_BACKEND_URL}${cleanPath}`;
+  const url = `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
-
-  const reqOptions = {
+  const response = await fetch(url, {
     ...options,
-    headers
-  };
-
-  // Try relative proxy route first
-  try {
-    const res = await fetch(relativeUrl, reqOptions);
-    // If proxy responds (even 4xx/5xx responses from backend), return it
-    if (res.status !== 404 && res.status !== 502 && res.status !== 504) {
-      return res;
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
     }
-  } catch (err) {
-    console.warn(`[API] Relative request failed for ${relativeUrl}, trying direct backend:`, err.message);
-  }
+  });
 
-  // Fallback to direct backend URL
-  return await fetch(directUrl, reqOptions);
+  return response;
 }
 
-// Authentication APIs
+// ─── Authentication ────────────────────────────────────────────────────────────
+
 export const authApi = {
   login: (email, password) =>
     apiRequest('/login', {
@@ -93,7 +86,8 @@ export const authApi = {
     })
 };
 
-// AI & Bundles APIs (Comprehensive mapping of all ai.route.js endpoints)
+// ─── AI & Bundles ──────────────────────────────────────────────────────────────
+
 export const aiApi = {
   // POST /api/ai/userRequirements
   submitRequirements: (payload) =>
@@ -115,7 +109,7 @@ export const aiApi = {
       body: JSON.stringify(payload)
     }),
 
-  // POST /api/ai/aiEfficientSearch (Direct 1-step AI bundle generation without saved ID)
+  // POST /api/ai/aiEfficientSearch
   directAiSearch: (payload) =>
     apiRequest('/ai/aiEfficientSearch', {
       method: 'POST',
@@ -128,20 +122,20 @@ export const aiApi = {
       method: 'GET'
     }),
 
-  // GET /api/ai/bundles (Fetches latest requirement & Mistral AI generated bundles)
+  // GET /api/ai/bundles
   getLatestBundles: () =>
     apiRequest('/ai/bundles', {
       method: 'GET'
     }),
 
-  // General bundles handler
   getBundlesPage: (requirementId) =>
     apiRequest(requirementId ? `/ai/bundles/${requirementId}` : '/ai/bundles', {
       method: 'GET'
     })
 };
 
-// Products APIs
+// ─── Products ──────────────────────────────────────────────────────────────────
+
 export const productApi = {
   getAllProducts: () =>
     apiRequest('/products/products', {
@@ -154,7 +148,8 @@ export const productApi = {
     })
 };
 
-// Payment APIs
+// ─── Payments ─────────────────────────────────────────────────────────────────
+
 export const paymentApi = {
   getKey: () =>
     apiRequest('/getKey', {
