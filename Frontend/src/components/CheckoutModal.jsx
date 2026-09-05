@@ -34,7 +34,7 @@ export default function CheckoutModal({
   const handlePlaceOrder = async () => {
     setErrorMessage('');
     
-    // If Cash on Delivery is selected
+    // Cash on Delivery — no Razorpay involved
     if (paymentMethod === 'cod') {
       const generatedId = `BNDL-${Math.floor(100000 + Math.random() * 900000)}`;
       setOrderId(generatedId);
@@ -44,99 +44,106 @@ export default function CheckoutModal({
       return;
     }
 
-    // For Online Payments (Cards, Net Banking, UPI, Wallets) -> Trigger Razorpay Gateway
+    // Online payment → Razorpay
     try {
       setLoading(true);
 
-      // 1. Fetch Razorpay API Key from Backend
-      const keyRes = await paymentApi.getKey();
-      if (!keyRes.ok) {
-        throw new Error("Unable to retrieve Razorpay API Key from backend. Please ensure the backend server is running.");
+      // ── Step 1: Fetch Razorpay key from backend ──────────────────────────────
+      let keyData;
+      try {
+        const keyRes = await paymentApi.getKey();
+        if (!keyRes.ok) {
+          const text = await keyRes.text().catch(() => '');
+          throw new Error(`Backend returned HTTP ${keyRes.status} while fetching API key. ${text}`);
+        }
+        keyData = await keyRes.json();
+      } catch (networkErr) {
+        // fetch() itself threw — likely a network/CORS problem
+        throw new Error(
+          `Cannot reach backend server. Check that VITE_API_URL is set correctly in Vercel and the Render service is running. (${networkErr.message})`
+        );
       }
-      const keyData = await keyRes.json();
+
       const key = keyData.key;
-
       if (!key) {
-        throw new Error("Razorpay API Key is not configured on backend.");
+        throw new Error('RAZORPAY_API_KEY is not configured in backend environment variables on Render.');
       }
 
-      // 2. Create Order on Backend (Amount in Paise: INR * 100)
+      // ── Step 2: Create Razorpay order on backend ─────────────────────────────
       const amountInPaise = Math.round(totalAmount * 100);
-      const orderRes = await paymentApi.processPayment(amountInPaise);
-      if (!orderRes.ok) {
-        throw new Error("Order creation failed on backend server.");
+      let order;
+      try {
+        const orderRes = await paymentApi.processPayment(amountInPaise);
+        if (!orderRes.ok) {
+          const text = await orderRes.text().catch(() => '');
+          throw new Error(`Backend returned HTTP ${orderRes.status} while creating order. ${text}`);
+        }
+        const orderData = await orderRes.json();
+        order = orderData.order;
+      } catch (networkErr) {
+        throw new Error(
+          `Order creation request failed. (${networkErr.message})`
+        );
       }
-      const orderData = await orderRes.json();
-      const order = orderData.order;
 
       if (!order || !order.id) {
-        throw new Error("Order creation failed on backend server. Please verify backend logs.");
+        throw new Error('Backend did not return a valid order object. Check Render logs for Razorpay errors.');
       }
 
-      // 3. Ensure Razorpay Checkout SDK is loaded
+      // ── Step 3: Ensure Razorpay SDK is loaded ────────────────────────────────
       if (!window.Razorpay) {
-        throw new Error("Razorpay Checkout SDK is loading. Please check your internet connection and retry.");
+        throw new Error('Razorpay Checkout SDK failed to load. Check your internet connection and retry.');
       }
 
-      // Clean phone number to 10 standard digits
+      // ── Step 4: Open Razorpay Checkout ───────────────────────────────────────
       const cleanedDigits = (address.phone || '').replace(/[^0-9]/g, '');
       const validPhone = cleanedDigits.length >= 10 ? cleanedDigits.slice(-10) : '9876543210';
 
-      // 4. Construct Razorpay Options
-      // Determine the success redirect URL dynamically from the actual browser origin.
-      // This ensures it works both in local dev (localhost:5173) and on the live site.
-      const successRedirectUrl = `${window.location.origin}/paymentsuccess`;
-
       const options = {
-        key: key,
+        key,
         amount: order.amount,
-        currency: "INR",
-        name: "IntentCartAI",
-        description: `Order for ${totalItemCount} item(s) - ₹${totalAmount.toLocaleString('en-IN')}`,
-        image: "https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png",
+        currency: 'INR',
+        name: 'IntentCartAI',
+        description: `Order for ${totalItemCount} item(s) — ₹${totalAmount.toLocaleString('en-IN')}`,
+        image: 'https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png',
         order_id: order.id,
         prefill: {
           name: address.fullName || 'Valued Customer',
-          email: currentUser?.email || "customer@intentcart.ai",
+          email: currentUser?.email || 'customer@intentcart.ai',
           contact: validPhone
         },
         notes: {
           address: `${address.street}, ${address.city}, ${address.state} - ${address.pinCode}`
         },
-        theme: {
-          color: "#F59E0B"
-        },
+        theme: { color: '#F59E0B' },
         modal: {
-          ondismiss: function () {
-            setLoading(false);
-          }
+          ondismiss: () => setLoading(false)
         },
         handler: function (response) {
-          // Client-side success handler — uses dynamic origin so this works on
-          // localhost, Vercel, or any other deployment without any code change.
-          if (response && response.razorpay_payment_id) {
-            window.location.href = `${successRedirectUrl}?reference=${response.razorpay_payment_id}`;
+          // Redirect on success using the browser's actual current origin —
+          // works on localhost, Vercel, or any other host without any code change.
+          if (response?.razorpay_payment_id) {
+            window.location.href = `${window.location.origin}/paymentsuccess?reference=${response.razorpay_payment_id}`;
           }
         }
       };
 
       const razor = new window.Razorpay(options);
-      
-      razor.on('payment.failed', function (response) {
-        setErrorMessage(response.error.description || "Payment was not completed. You may retry or choose a different payment method.");
+      razor.on('payment.failed', (response) => {
+        setErrorMessage(response.error?.description || 'Payment failed. Please retry or choose a different payment method.');
         setLoading(false);
       });
 
-      // Open Razorpay Checkout modal
       razor.open();
       setLoading(false);
 
     } catch (error) {
-      console.error("Razorpay Checkout Error:", error);
-      setErrorMessage(error.message || "Failed to initialize payment gateway. Please try again.");
+      console.error('[Razorpay] Checkout Error:', error);
+      setErrorMessage(error.message || 'Failed to initialize payment gateway. Please try again.');
       setLoading(false);
     }
   };
+
 
   const stepsList = [
     { num: 1, title: 'Address' },

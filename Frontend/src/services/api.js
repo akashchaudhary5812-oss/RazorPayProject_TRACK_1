@@ -1,27 +1,27 @@
 /**
  * Centralized API client for IntentCartAI
  *
- * How the base URL is resolved (in order of priority):
- *   1. VITE_API_BASE_URL environment variable (set this in Vercel dashboard for production)
- *   2. Falls back to '/api' which is proxied to the backend by Vite during local development
+ * URL Resolution Strategy:
+ *   - Production (Vercel): Set VITE_API_URL in Vercel dashboard
+ *     Example: VITE_API_URL = https://razorpayproject-track-1.onrender.com/api
+ *   - Local dev: Falls back to '/api', proxied by Vite to localhost:3000
  *
- * Production setup (Vercel → Environment Variables):
- *   VITE_API_URL = https://razorpayproject-track-1.onrender.com/api
- *
- * Local development:
- *   Vite proxy in vite.config.js forwards '/api' → 'http://localhost:3000'
- *   No env variable needed locally.
+ * NOTE: VITE_API_URL must NOT have a trailing slash.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// Strip trailing slash defensively so URLs always compose cleanly
+const RAW_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = RAW_BASE.endsWith('/') ? RAW_BASE.slice(0, -1) : RAW_BASE;
 
 /**
- * Generic fetch wrapper — all API calls go through here.
- * @param {string} path  - e.g. '/login', '/ai/bundles'
+ * Core fetch wrapper. All API calls go through this.
+ * @param {string} path - e.g. '/login', '/getKey', '/ai/bundles'
  * @param {RequestInit} options
+ * @returns {Promise<Response>}
  */
 export async function apiRequest(path, options = {}) {
-  const url = `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const url = `${API_BASE}${cleanPath}`;
 
   const response = await fetch(url, {
     ...options,
@@ -89,40 +89,34 @@ export const authApi = {
 // ─── AI & Bundles ──────────────────────────────────────────────────────────────
 
 export const aiApi = {
-  // POST /api/ai/userRequirements
   submitRequirements: (payload) =>
     apiRequest('/ai/userRequirements', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
 
-  // GET /api/ai/aiEfficientSearch/:id
   getAiBundles: (requirementId) =>
     apiRequest(`/ai/aiEfficientSearch/${requirementId}`, {
       method: 'GET'
     }),
 
-  // POST /api/ai/aiEfficientSearch/:id
   postAiBundlesWithId: (requirementId, payload = {}) =>
     apiRequest(`/ai/aiEfficientSearch/${requirementId}`, {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
 
-  // POST /api/ai/aiEfficientSearch
   directAiSearch: (payload) =>
     apiRequest('/ai/aiEfficientSearch', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
 
-  // GET /api/ai/bundles/:id
   getBundlesById: (requirementId) =>
     apiRequest(`/ai/bundles/${requirementId}`, {
       method: 'GET'
     }),
 
-  // GET /api/ai/bundles
   getLatestBundles: () =>
     apiRequest('/ai/bundles', {
       method: 'GET'
