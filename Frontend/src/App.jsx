@@ -26,8 +26,8 @@ export default function App() {
 
   // URL-driven states
   const pathname = location.pathname;
-  const isRegisterRoute = pathname === '/register' || pathname === '/signup' || pathname === '/api/register';
-  const isLoginRoute = pathname === '/login' || pathname === '/signin' || pathname === '/api/login';
+  const isRegisterRoute = pathname === '/register' || pathname === '/signup';
+  const isLoginRoute = pathname === '/login' || pathname === '/signin';
   const isAuthRoute = isRegisterRoute || isLoginRoute;
 
   const isCartRoute = pathname === '/cart';
@@ -35,7 +35,7 @@ export default function App() {
   const bundlesParamId = isBundlesRoute ? pathname.replace('/bundles/', '').replace('/bundles', '') : null;
 
   const referenceParam = searchParams.get('reference');
-  const isPaymentSuccessRoute = pathname === '/paymentsuccess' || !!referenceParam;
+  const isPaymentSuccessRoute = pathname === '/paymentsuccess';
 
   const [activeRequirementId, setActiveRequirementId] = useState(bundlesParamId || null);
 
