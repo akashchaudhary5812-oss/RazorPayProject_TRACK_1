@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, Heart, User, Sparkles, Menu, X, Search, MapPin, ChevronDown, Flame, Globe, Mic, MicOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ShoppingBag, Heart, User, Sparkles, Menu, X, Search, MapPin, ChevronDown, Flame, Globe, Mic, MicOff, Package } from 'lucide-react';
 import { CATEGORIES } from '../data/products';
 
 export default function Navbar({
@@ -16,6 +17,7 @@ export default function Navbar({
   onOpenDeals,
   currentUser
 }) {
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState('');
   const [selectedSearchCategory, setSelectedSearchCategory] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -79,18 +81,25 @@ export default function Navbar({
     }
   };
 
+  const handleCategoryClick = (catName) => {
+    if (onSelectCategory) {
+      onSelectCategory(catName);
+    }
+  };
+
   const navLinks = [
+    { name: "All Products", action: () => navigate('/products') },
     { name: "Today's Deals", action: onOpenDeals },
-    { name: "Electronics", action: () => onSelectCategory && onSelectCategory("Electronics") },
-    { name: "Grocery & Gourmet", action: () => onSelectCategory && onSelectCategory("Grocery & Food") },
-    { name: "Women's Fashion", action: () => onSelectCategory && onSelectCategory("Women's Fashion") },
-    { name: "Jewellery", action: () => onSelectCategory && onSelectCategory("Jewellery") },
-    { name: "Men's Fashion", action: () => onSelectCategory && onSelectCategory("Men's Fashion") },
-    { name: "Home & Kitchen", action: () => onSelectCategory && onSelectCategory("Home & Kitchen") },
-    { name: "Mobile Phones", action: () => onSelectCategory && onSelectCategory("Smartphones") },
-    { name: "Laptops & PCs", action: () => onSelectCategory && onSelectCategory("Laptops") },
-    { name: "Headphones & Audio", action: () => onSelectCategory && onSelectCategory("Audio") },
-    { name: "AI Smart Bundles", action: () => onTriggerAISearch && onTriggerAISearch("Top AI Recommended Bundle") }
+    { name: "Electronics", action: () => handleCategoryClick("Electronics") },
+    { name: "Grocery & Gourmet", action: () => handleCategoryClick("Grocery & Food") },
+    { name: "Women's Fashion", action: () => handleCategoryClick("Women's Fashion") },
+    { name: "Jewellery", action: () => handleCategoryClick("Jewellery") },
+    { name: "Men's Fashion", action: () => handleCategoryClick("Men's Fashion") },
+    { name: "Home & Kitchen", action: () => handleCategoryClick("Home & Kitchen") },
+    { name: "Mobile Phones", action: () => handleCategoryClick("Smartphones") },
+    { name: "Laptops & PCs", action: () => handleCategoryClick("Laptops") },
+    { name: "Headphones & Audio", action: () => handleCategoryClick("Audio") },
+    { name: "All Your Bundles", action: () => navigate('/bundles') }
   ];
 
   return (
@@ -133,7 +142,10 @@ export default function Navbar({
               <Menu className="w-6 h-6" />
             </button>
 
-            <a href="#" className="flex items-center gap-2.5 group">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2.5 group text-left cursor-pointer"
+            >
               <img
                 src="https://ik.imagekit.io/8uutsqtnj/INTENT_CART_AI_LOGO.png"
                 alt="IntentCartAI Logo"
@@ -147,7 +159,7 @@ export default function Navbar({
                   Smart E-Commerce
                 </span>
               </div>
-            </a>
+            </button>
           </div>
 
           {/* PROMINENT CENTRAL SEARCH BAR */}

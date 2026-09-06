@@ -11,6 +11,8 @@ import Footer from './components/Footer';
 import AISearchModal from './components/AISearchModal';
 import CartWishlistModal from './components/CartWishlistModal';
 import BundlesPage from './components/BundlesPage';
+import ProductDetailPage from './components/ProductDetailPage';
+import UserRequirementsPage from './components/UserRequirementsPage';
 import ProductDetailsModal from './components/ProductDetailsModal';
 import CategoryDrawer from './components/CategoryDrawer';
 import CartPage from './components/CartPage';
@@ -31,11 +33,32 @@ export default function App() {
   const isAuthRoute = isRegisterRoute || isLoginRoute;
 
   const isCartRoute = pathname === '/cart';
+  const isPaymentSuccessRoute = pathname === '/paymentsuccess';
+  const isProductsRoute = pathname === '/products';
+  const isProductDetailRoute = pathname.startsWith('/product/');
+
+  // System Design AI Routes
+  const isUserRequirementsRoute = pathname === '/userRequirements' || pathname === '/ai-search';
+
+  const isAiEfficientSearchRoute = pathname.startsWith('/aiEfficientSearch');
+  const aiEfficientSearchParamId = isAiEfficientSearchRoute
+    ? pathname.replace('/aiEfficientSearch/', '').replace('/aiEfficientSearch', '')
+    : null;
+
+  const isBundleDetailRoute = pathname.startsWith('/bundle/');
+  const bundleDetailParamId = isBundleDetailRoute
+    ? pathname.replace('/bundle/', '').replace('/bundle', '')
+    : null;
+
   const isBundlesRoute = pathname.startsWith('/bundles');
-  const bundlesParamId = isBundlesRoute ? pathname.replace('/bundles/', '').replace('/bundles', '') : null;
+  const bundlesParamId = isBundlesRoute
+    ? pathname.replace('/bundles/', '').replace('/bundles', '')
+    : null;
+
+  const isAnyBundlesRoute = isAiEfficientSearchRoute || isBundlesRoute || isBundleDetailRoute;
+  const currentRequirementId = aiEfficientSearchParamId || bundleDetailParamId || bundlesParamId || null;
 
   const referenceParam = searchParams.get('reference');
-  const isPaymentSuccessRoute = pathname === '/paymentsuccess';
 
   const [activeRequirementId, setActiveRequirementId] = useState(bundlesParamId || null);
 
@@ -178,21 +201,34 @@ export default function App() {
 
   // Product View Details
   const handleViewDetails = (product) => {
-    setActiveProduct(product);
-    setDetailsModalOpen(true);
+    const prodId = product?.id || product?._id || product?.productId;
+    if (prodId) {
+      navigate(`/product/${prodId}`);
+    } else {
+      setActiveProduct(product);
+      setDetailsModalOpen(true);
+    }
   };
 
   // Trigger AI Search
   const handleTriggerAISearch = (query) => {
     setSearchQuery(query || '');
-    setAiModalOpen(true);
+    navigate('/userRequirements');
   };
 
-  // Open /bundles page view
+  // Close AI Search
+  const handleCloseAISearch = () => {
+    setAiModalOpen(false);
+    if (isUserRequirementsRoute) {
+      navigate('/');
+    }
+  };
+
+  // Open /aiEfficientSearch page view
   const handleOpenBundlesPage = (requirementId) => {
     setActiveRequirementId(requirementId || null);
     setAiModalOpen(false);
-    navigate(requirementId ? `/bundles/${requirementId}` : '/bundles');
+    navigate(requirementId ? `/aiEfficientSearch/${requirementId}` : '/bundles');
   };
 
   // Search Submission from Navbar
@@ -201,7 +237,7 @@ export default function App() {
     if (category && category !== 'all') {
       setSelectedCategory(category);
     }
-    if (pathname !== '/') {
+    if (pathname !== '/' && pathname !== '/products') {
       navigate('/');
     }
     const elem = document.getElementById('products');
@@ -219,12 +255,12 @@ export default function App() {
     0
   );
 
-  // If in bundles page view
-  if (isBundlesRoute) {
+  // If in bundles, aiEfficientSearch, or bundle detail page view
+  if (isAnyBundlesRoute) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between">
         <BundlesPage
-          requirementId={bundlesParamId || activeRequirementId}
+          requirementId={currentRequirementId}
           onBackToHome={() => navigate('/')}
           onAddToCart={handleAddToCart}
           onViewDetails={handleViewDetails}
@@ -294,6 +330,31 @@ export default function App() {
             onProceedToCheckout={() => setCheckoutModalOpen(true)}
             onBackToShopping={() => navigate('/')}
           />
+        ) : isUserRequirementsRoute ? (
+          /* AI Smart Bundle Finder Form at /userRequirements */
+          <UserRequirementsPage initialQuery={searchQuery} />
+        ) : isProductDetailRoute ? (
+          /* Dedicated Product Detail Page at /product/:id */
+          <ProductDetailPage
+            onAddToCart={handleAddToCart}
+            onToggleWishlist={handleToggleWishlist}
+            wishlist={wishlist}
+            onBuyNow={() => setCheckoutModalOpen(true)}
+            onOpenCart={() => navigate('/cart')}
+          />
+        ) : isProductsRoute ? (
+          /* Full Catalog Products Page at /products */
+          <div className="py-6 min-h-[70vh]">
+            <FeaturedProducts
+              wishlist={wishlist}
+              toggleWishlist={handleToggleWishlist}
+              onAddToCart={handleAddToCart}
+              onViewDetails={handleViewDetails}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+              searchQuery={searchQuery}
+            />
+          </div>
         ) : (
           /* Homepage E-Commerce Layout */
           <>
@@ -344,7 +405,7 @@ export default function App() {
       {/* AI Search Modal */}
       <AISearchModal
         isOpen={aiModalOpen}
-        onClose={() => setAiModalOpen(false)}
+        onClose={handleCloseAISearch}
         searchQuery={searchQuery}
         onAddBundleToCart={handleAddToCart}
         onOpenBundlesPage={handleOpenBundlesPage}

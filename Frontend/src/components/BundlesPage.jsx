@@ -24,7 +24,7 @@ export default function BundlesPage({ requirementId, onBackToHome, onAddToCart, 
 
     try {
       const res = requirementId
-        ? await aiApi.getBundlesById(requirementId)
+        ? await aiApi.getAiBundles(requirementId)
         : await aiApi.getLatestBundles();
 
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to load bundles`);
