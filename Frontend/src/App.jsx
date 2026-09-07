@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Navbar from './components/Navbar';
 import HeroBanner from './components/HeroBanner';
 import LightningDeals from './components/LightningDeals';
@@ -279,6 +280,7 @@ export default function App() {
           onAddToCartFromWishlist={handleAddToCart}
         />
         <Analytics />
+        <SpeedInsights />
       </div>
     );
   }
@@ -490,6 +492,7 @@ export default function App() {
       />
 
       <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
