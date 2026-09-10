@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Star, Filter, ArrowUpDown, ChevronDown, Sparkles, SlidersHorizontal, PackageSearch, Layers } from 'lucide-react';
 import { FEATURED_PRODUCTS as FALLBACK_PRODUCTS, CATEGORIES, SUBCATEGORIES_BY_CATEGORY } from '../data/products';
 import ProductCard from './ProductCard';
+import LogoLoader from './LogoLoader';
 import { productApi } from '../services/api';
 
 export default function FeaturedProducts({
@@ -18,6 +19,31 @@ export default function FeaturedProducts({
   const [activeSubcategory, setActiveSubcategory] = useState('all');
   const [sortBy, setSortBy] = useState('featured'); // 'featured', 'price-asc', 'price-desc', 'rating', 'discount'
   const [visibleCount, setVisibleCount] = useState(32);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [filterMessage, setFilterMessage] = useState('');
+  const isFirstMount = useRef(true);
+
+  // Transition state on category/filtering change
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    setIsFiltering(true);
+    if (activeCategory !== 'all') {
+      setFilterMessage(`Loading ${activeCategory} products...`);
+    } else if (searchQuery) {
+      setFilterMessage(`Searching "${searchQuery}"...`);
+    } else {
+      setFilterMessage('Updating product catalog...');
+    }
+
+    const timer = setTimeout(() => {
+      setIsFiltering(false);
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [activeCategory, activeSubcategory, searchQuery, sortBy]);
 
   // Synchronize category if passed from props
   useEffect(() => {
@@ -250,8 +276,40 @@ export default function FeaturedProducts({
       )}
 
       {/* PRODUCT GRID */}
-      {displayedProducts.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 my-4 shadow-xs">
+      {isFiltering ? (
+        <div className="space-y-6">
+          {/* Non-blocking Category & Filtering Status Loader */}
+          <div className="bg-white/90 backdrop-blur-xs rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-center">
+            <LogoLoader
+              size="sm"
+              text={filterMessage}
+              subtext="Updating marketplace listings"
+            />
+          </div>
+
+          {/* Skeleton Product Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-slate-200/80 p-4 space-y-3 animate-pulse"
+              >
+                <div className="w-full h-48 bg-slate-100 rounded-xl" />
+                <div className="space-y-2 pt-1">
+                  <div className="h-3 w-16 bg-slate-100 rounded" />
+                  <div className="h-4 w-4/5 bg-slate-200 rounded" />
+                  <div className="h-3 w-3/5 bg-slate-100 rounded" />
+                </div>
+                <div className="flex items-center justify-between pt-2">
+                  <div className="h-5 w-20 bg-slate-200 rounded" />
+                  <div className="h-8 w-24 bg-slate-100 rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : displayedProducts.length === 0 ? (
+        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 my-4 shadow-xs animate-fade-in-slide">
           <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
             <PackageSearch className="w-6 h-6" />
           </div>
@@ -271,7 +329,7 @@ export default function FeaturedProducts({
           </div>
         </div>
       ) : (
-        <>
+        <div className="animate-fade-in-slide">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {displayedProducts.map((product) => {
               const isWishlisted = wishlist.some((item) => item.id === product.id);
@@ -322,7 +380,7 @@ export default function FeaturedProducts({
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
     </section>

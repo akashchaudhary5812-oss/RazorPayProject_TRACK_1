@@ -7,6 +7,7 @@ import {
 import confetti from 'canvas-confetti';
 import { productApi } from '../services/api';
 import { FEATURED_PRODUCTS } from '../data/products';
+import LogoLoader from './LogoLoader';
 
 export default function ProductDetailPage({
   onAddToCart,
@@ -105,18 +106,26 @@ export default function ProductDetailPage({
     return (
       <div className="min-h-screen bg-[#F8FAFC]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+          {/* Centered LogoLoader */}
+          <div className="mb-6 flex items-center justify-center">
+            <LogoLoader
+              size="md"
+              text="Loading product details..."
+              subtext="Retrieving specifications, pricing, and availability"
+            />
+          </div>
           {/* Breadcrumb skeleton */}
-          <div className="h-4 w-48 bg-slate-200 rounded animate-pulse mb-6" />
+          <div className="h-4 w-48 bg-slate-200/80 rounded animate-pulse mb-6" />
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-            <div className="md:col-span-5 h-96 bg-slate-200 rounded-2xl animate-pulse" />
+            <div className="md:col-span-5 h-96 bg-slate-200/80 rounded-2xl animate-pulse" />
             <div className="md:col-span-4 space-y-4">
-              <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
-              <div className="h-8 w-full bg-slate-200 rounded animate-pulse" />
-              <div className="h-8 w-3/4 bg-slate-200 rounded animate-pulse" />
-              <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
-              <div className="h-16 w-full bg-slate-200 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-slate-200/80 rounded animate-pulse" />
+              <div className="h-8 w-full bg-slate-200/80 rounded animate-pulse" />
+              <div className="h-8 w-3/4 bg-slate-200/80 rounded animate-pulse" />
+              <div className="h-4 w-32 bg-slate-200/80 rounded animate-pulse" />
+              <div className="h-16 w-full bg-slate-200/80 rounded animate-pulse" />
             </div>
-            <div className="md:col-span-3 h-64 bg-slate-200 rounded-2xl animate-pulse" />
+            <div className="md:col-span-3 h-64 bg-slate-200/80 rounded-2xl animate-pulse" />
           </div>
         </div>
       </div>
@@ -163,7 +172,7 @@ export default function ProductDetailPage({
 
   // ── PRODUCT DETAIL PAGE ────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] pb-20 animate-fade-in-slide">
 
       {/* BREADCRUMB NAV */}
       <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3">

@@ -21,12 +21,30 @@ import CartPage from './components/CartPage';
 import CheckoutModal from './components/CheckoutModal';
 import AuthModal from './components/AuthModal';
 import PaymentSuccess from './components/PaymentSuccess';
+import LogoLoader from './components/LogoLoader';
 import { FEATURED_PRODUCTS } from './data/products';
 
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Initial application loading animation
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loaderExiting, setLoaderExiting] = useState(false);
+
+  useEffect(() => {
+    // Smooth initial load transition
+    const timer = setTimeout(() => {
+      setLoaderExiting(true);
+      const exitTimer = setTimeout(() => {
+        setInitialLoading(false);
+      }, 350);
+      return () => clearTimeout(exitTimer);
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // URL-driven states
   const pathname = location.pathname;
@@ -260,7 +278,17 @@ export default function App() {
   // If in bundles, aiEfficientSearch, or bundle detail page view
   if (isAnyBundlesRoute) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between">
+      <div className={`min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between ${!initialLoading ? 'animate-fade-in-slide' : ''}`}>
+        {initialLoading && (
+          <div
+            className={`fixed inset-0 z-100 flex items-center justify-center bg-[#F8FAFC] transition-opacity duration-350 ease-out ${
+              loaderExiting ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            <LogoLoader size="fullscreen" text="Preparing your shopping experience..." subtext="Loading marketplace products and deals" />
+          </div>
+        )}
+
         <BundlesPage
           requirementId={currentRequirementId}
           onBackToHome={() => navigate('/')}
@@ -286,7 +314,16 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between selection:bg-amber-400 selection:text-slate-950">
+    <div className={`min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col justify-between selection:bg-amber-400 selection:text-slate-950 ${!initialLoading ? 'animate-fade-in-slide' : ''}`}>
+      {initialLoading && (
+        <div
+          className={`fixed inset-0 z-100 flex items-center justify-center bg-[#F8FAFC] transition-opacity duration-350 ease-out ${
+            loaderExiting ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <LogoLoader size="fullscreen" text="Preparing your shopping experience..." subtext="Loading marketplace products and deals" />
+        </div>
+      )}
       
       <div>
         {/* Amazon-style Multi-tier E-commerce Header */}

@@ -1,71 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingBag } from 'lucide-react';
+import React from 'react';
+import LogoLoader from './LogoLoader';
 
 export default function BundleSkeletonGrid({ cardCount = 4 }) {
-  const [loadingPhase, setLoadingPhase] = useState(0);
-
-  useEffect(() => {
-    // Stage 1 -> Stage 2 after 3.5s
-    const timer1 = setTimeout(() => {
-      setLoadingPhase(1);
-    }, 3500);
-
-    // Stage 2 -> Stage 3 after 7.5s
-    const timer2 = setTimeout(() => {
-      setLoadingPhase(2);
-    }, 7500);
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, []);
-
   return (
-    <div className="w-full space-y-6 animate-pulse">
-      {/* Customer-friendly Timed Status Header */}
-      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 text-center shadow-xs">
-        <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3">
-          <ShoppingBag className="w-5 h-5 animate-bounce" />
-        </div>
-
-        {loadingPhase === 0 && (
-          <div className="space-y-1 transition-all duration-300">
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
-              Your bundle will be ready shortly.
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              We're putting together the best products for you.
-            </p>
-          </div>
-        )}
-
-        {loadingPhase === 1 && (
-          <div className="space-y-1 transition-all duration-300">
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
-              It's taking a little longer than usual.
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Finding compatible products and verifying available bundle discounts...
-            </p>
-          </div>
-        )}
-
-        {loadingPhase >= 2 && (
-          <div className="space-y-1 transition-all duration-300">
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
-              We're still preparing your bundle. Please wait a moment.
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Finalizing your custom product combination and pricing...
-            </p>
-          </div>
-        )}
-
-        {/* Subtle Progress Bar */}
-        <div className="w-48 h-1 bg-slate-100 rounded-full mx-auto mt-4 overflow-hidden">
-          <div className="h-full bg-amber-400 rounded-full animate-[progress_1.8s_ease-in-out_infinite] w-2/3" />
-        </div>
+    <div className="w-full space-y-6">
+      {/* Customer-friendly Status Header with LogoLoader */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 text-center shadow-xs">
+        <LogoLoader
+          size="md"
+          bundleMode={true}
+          subtext="Finding compatible products and verifying available bundle discounts..."
+        />
       </div>
 
       {/* Top Summary Bar Skeleton */}

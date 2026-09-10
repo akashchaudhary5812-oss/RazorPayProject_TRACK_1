@@ -175,7 +175,7 @@ export default function BundlesPage({ requirementId, onBackToHome, onAddToCart, 
           </div>
         ) : (
           /* 4. RENDER AMAZON BUNDLE SECTIONS */
-          <div className="space-y-8">
+          <div className="space-y-8 animate-fade-in-slide">
             <div className="text-xs font-semibold text-slate-500 flex items-center justify-between">
               <span>Showing <strong>{displayedBundles.length}</strong> recommended bundles</span>
             </div>

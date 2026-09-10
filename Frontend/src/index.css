@@ -72,3 +72,99 @@
   background: #94A3B8;
 }
 
+/* Reddit-inspired LogoLoader Animations */
+@keyframes loader-float-pulse {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.025);
+  }
+}
+
+@keyframes loader-shadow {
+  0%, 100% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleX(0.82) scaleY(0.75);
+    opacity: 0.20;
+  }
+}
+
+@keyframes loader-orbit {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loader-ring-dash {
+  0% {
+    stroke-dashoffset: 260;
+    transform: rotate(0deg);
+  }
+  50% {
+    stroke-dashoffset: 70;
+    transform: rotate(180deg);
+  }
+  100% {
+    stroke-dashoffset: 260;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in-slide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes simple-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-loader-float {
+  animation: loader-float-pulse 1.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-loader-shadow {
+  animation: loader-shadow 1.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-loader-orbit {
+  animation: loader-orbit 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+.animate-fade-in-slide {
+  animation: fade-in-slide 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-loader-float,
+  .animate-loader-shadow,
+  .animate-loader-orbit,
+  .animate-spin-slow,
+  .animate-pulse-subtle {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .animate-fade-in-slide {
+    animation: simple-fade 0.25s ease forwards !important;
+  }
+}
+
